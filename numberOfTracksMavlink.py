@@ -10,15 +10,16 @@ logs = "../build/logs/alaska/"
 day_to_contents = {}
 
 rows = {}
+icaos = {}
 
-for file in glob.glob(logs + "**/*radar.log", recursive=True):
+for file in glob.glob(logs + "**/*link.log", recursive=True):
 	config = file.replace(".log", "_config.log")
-	radar_name = "unknown"
+	protocol = "unknown"
 	if os.path.isfile(config):
 		with open(config, "r") as fr:
 			config_stuff = json.loads(fr.read())
-			radar_name = config_stuff['name']
-	print(file + " was recorded with " + radar_name)
+			protocol = config_stuff['name']
+	print(file + " was recorded with " + protocol)
 
 	with open(file, "r") as fr:
 		stuff = json.loads(fr.read())
@@ -41,15 +42,18 @@ for file in glob.glob(logs + "**/*radar.log", recursive=True):
 			day_to_contents[day].append((file, n))
 		else:
 			day_to_contents[day] = [(file, n)]
-		new_row = [ntpath.basename(file), radar_name, n, str(mintime.time()).split(".")[0], str(maxtime.time()).split(".")[0], str(_range), str(n/_range), "windows" if "windows" in file else "linux" if "linux" in file else "unknown"]
+		new_row = [ntpath.basename(file), protocol, n, str(mintime.time()).split(".")[0], str(maxtime.time()).split(".")[0], str(_range), str(n/_range), "windows" if "windows" in file else "linux" if "linux" in file else "unknown"]
 		if day in rows:
 			rows[day].append(new_row)
+			icaos[day] += ids
 		else:
 			rows[day] = [new_row]
+			icaos[day] = ids
 
 for day, contents in rows.items():
-	print(day)
-	print(tabulate(sorted(contents), headers=["File", "RADAR", "Number of Tracks", "First Track", "Last Track", "Minutes First to Last", "Tracks/Minute", "OS"]))
+	print("\n" + day + " - saw IDs: " + ",".join(list(set(icaos[day]))))
+	print("\n")
+	print(tabulate(sorted(contents), headers=["File", "Protocol", "Number of IDs", "First Packet", "Last Packet", "Minutes First to Last", "IDs/Minute", "OS"]))
 # for day, contents in day_to_contents.items():
 # 	print(str(day) + ":")
 # 	for (file, num) in day_to_contents[day]:
