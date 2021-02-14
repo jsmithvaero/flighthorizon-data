@@ -21,29 +21,40 @@ import os
 matplotlib.rc('font', size=12)
 # matplotlib.rc('axes', titlesize=10)
 
+demo_radar_file = \
+	"../build/logs/alaska/01.26.21/linux/20210126T072518_radar.log"
 
-def two_plot(x, y1, y2):
+
+# def two_plot(x, y1, name1, y2, name2):
+def multi_plot(x, named_ys):
 	fig = plt.figure()
 	# set height ratios for subplots
-	gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1]) 
+	gs = gridspec.GridSpec(len(named_ys), 1, height_ratios=[1, 1]) 
 
 	# the first subplot
 	ax0 = plt.subplot(gs[0])
 	# log scale for axis Y of the first subplot
-	ax0.set_yscale("log")
+	ax0.set_yscale("linear")
+
+	(y1, name1) = named_ys[0]
+
 	line0, = ax0.plot(x, y1, color='r')
 
-	# the second subplot
-	# shared axis X
-	ax1 = plt.subplot(gs[1], sharex = ax0)
-	line1, = ax1.plot(x, y2, color='b', linestyle='--')
-	plt.setp(ax0.get_xticklabels(), visible=False)
-	# remove last tick label for the second subplot
-	yticks = ax1.yaxis.get_major_ticks()
-	yticks[-1].label1.set_visible(False)
+	i = 1
+
+	for (yi, namei) in named_ys[1:]:
+
+		# the second subplot
+		# shared axis X
+		ax1 = plt.subplot(gs[i], sharex=ax0)
+		line1, = ax1.plot(x, yi, color='b')
+		plt.setp(ax0.get_xticklabels(), visible=False)
+		# remove last tick label for the second subplot
+		yticks = ax1.yaxis.get_major_ticks()
+		yticks[-1].label1.set_visible(False)
 
 	# put legend on first subplot
-	ax0.legend((line0, line1), ('red line', 'blue line'), loc='lower left')
+	# ax0.legend((line0, line1), (name1, name2), loc='lower left')
 
 	# remove vertical gap between subplots
 	plt.subplots_adjust(hspace=.0)
@@ -132,6 +143,15 @@ def plot_radar_points(radar_file_name):
 	cbar.set_label('Confidence', rotation=270)
 	plt.show()
 
+def plot_radar_xys(radar_file_name):
+	points = get_radar_points(radar_file_name)
+	xline = [p[0] for p in points]
+	distline = [(p[2] ** 2 + p[3] ** 2 + p[4] ** 2) ** 0.5 for p in points]
+	confline = [p[1] for p in points]
+	# two_plot(xline, distline, "Distance from RADAR", confline, "Confidence")
+	multi_plot(xline, [(distline, "Distance from RADAR"), \
+					   (confline, "Confidence")])
+
 # Simple data to display in various forms
 # x = np.linspace(0, 2 * np.pi, 400)
 # y1 = np.sin(x ** 2)
@@ -139,4 +159,8 @@ def plot_radar_points(radar_file_name):
 
 # two_plot(x, y1, y2)
 
-plot_radar_points("../build/logs/alaska/01.26.21/linux/20210126T072518_radar.log")
+# plot_radar_points(demo_radar_file)
+
+
+
+plot_radar_xys(demo_radar_file)
