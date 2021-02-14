@@ -16,6 +16,10 @@ import json
 from geopy import distance
 from mpl_toolkits import mplot3d
 import matplotlib.colors
+import os
+
+matplotlib.rc('font', size=12)
+# matplotlib.rc('axes', titlesize=10)
 
 
 def two_plot(x, y1, y2):
@@ -111,6 +115,9 @@ def get_radar_points(radar_file_name):
 
 def plot_radar_points(radar_file_name):
 	fig = plt.figure()
+	fig.suptitle("RADAR data - " \
+		+ os.path.basename(radar_file_name)\
+			.replace(".log", ""))
 	ax = plt.axes(projection='3d')
 	ax.set_ylabel('Δy from RADAR')
 	ax.set_xlabel('Δx from RADAR')
