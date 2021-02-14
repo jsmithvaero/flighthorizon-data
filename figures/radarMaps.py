@@ -8,6 +8,10 @@ description: the purpose of this file is to make timeline infographics
 works cited: https://stackoverflow.com/a/37738851/1586231
              https://stackoverflow.com/a/43211266/1586231
              https://stackoverflow.com/q/15908371/1586231
+             https://matplotlib.org/3.1.1/gallery/subplots_axes_and_figures/
+             	     subplot.html#sphx-glr-gallery-subplots-axes-and-figures
+             	     -subplot-py
+             https://stackoverflow.com/a/55690467/1586231
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,6 +21,14 @@ from geopy import distance
 from mpl_toolkits import mplot3d
 import matplotlib.colors
 import os
+import matplotlib.units as munits
+import matplotlib.dates as mdates
+from datetime import datetime, date
+
+converter = mdates.ConciseDateConverter()
+munits.registry[np.datetime64] = converter
+munits.registry[date] = converter
+munits.registry[datetime] = converter
 
 matplotlib.rc('font', size=12)
 # matplotlib.rc('axes', titlesize=10)
@@ -26,10 +38,11 @@ demo_radar_file = \
 
 
 # def two_plot(x, y1, name1, y2, name2):
-def multi_plot(x, named_ys):
+def multi_plot(name, x, named_ys):
 	fig = plt.figure()
+	fig.suptitle(name)
 	# set height ratios for subplots
-	gs = gridspec.GridSpec(len(named_ys), 1, height_ratios=[1, 1]) 
+	gs = gridspec.GridSpec(len(named_ys), 1, height_ratios=[1]*len(named_ys)) 
 
 	# the first subplot
 	ax0 = plt.subplot(gs[0])
@@ -38,20 +51,26 @@ def multi_plot(x, named_ys):
 
 	(y1, name1) = named_ys[0]
 
-	line0, = ax0.plot(x, y1, color='r')
+	line0, = ax0.plot(x, y1, 'o', color='r')
+	plt.ylabel(name1)
 
 	i = 1
+
+	colors = ['green', 'blue', 'black', 'purple']
 
 	for (yi, namei) in named_ys[1:]:
 
 		# the second subplot
 		# shared axis X
 		ax1 = plt.subplot(gs[i], sharex=ax0)
-		line1, = ax1.plot(x, yi, color='b')
+		plt.ylabel(namei)
+		line1, = ax1.plot(x, yi, 'o', color=colors[i % 4])
 		plt.setp(ax0.get_xticklabels(), visible=False)
+		ax1.xaxis.set_major_locator(plt.MaxNLocator(20))
 		# remove last tick label for the second subplot
 		yticks = ax1.yaxis.get_major_ticks()
 		yticks[-1].label1.set_visible(False)
+		i += 1
 
 	# put legend on first subplot
 	# ax0.legend((line0, line1), (name1, name2), loc='lower left')
@@ -59,6 +78,12 @@ def multi_plot(x, named_ys):
 	# remove vertical gap between subplots
 	plt.subplots_adjust(hspace=.0)
 	plt.show()
+
+def get_config_name(radar_file_name):
+	radar_config_file_name = radar_file_name.replace(".log", "_config.log")
+	with open(radar_config_file_name, "r") as fr:
+		stuff = json.loads(fr.read())
+		return stuff["name"]
 
 def get_config_location(radar_file_name):
 	radar_config_file_name = radar_file_name.replace(".log", "_config.log")
@@ -119,7 +144,13 @@ def get_radar_points(radar_file_name):
 		for entry in stuff:
 			(x, y, z) = (entry["xest"], entry["yest"], entry["zest"])
 			# dist = (x ** 2 + y ** 2 + z ** 2) ** 0.5
-			time = entry["timeStamp"]
+			time = None
+			try:
+				time = datetime.strptime(entry["timeStamp"], \
+					                     "%Y-%m-%dT%H:%M:%S.%fZ")
+			except:
+				time = datetime.strptime(entry["timeStamp"], \
+					                     "%Y-%m-%dT%H:%M:%SZ")
 			conf = entry["confidenceLevel"]
 			points.append((time, conf, x, y, z))
 	return points
@@ -146,11 +177,18 @@ def plot_radar_points(radar_file_name):
 def plot_radar_xys(radar_file_name):
 	points = get_radar_points(radar_file_name)
 	xline = [p[0] for p in points]
+	altline = [p[3] for p in points]
 	distline = [(p[2] ** 2 + p[3] ** 2 + p[4] ** 2) ** 0.5 for p in points]
 	confline = [p[1] for p in points]
-	# two_plot(xline, distline, "Distance from RADAR", confline, "Confidence")
-	multi_plot(xline, [(distline, "Distance from RADAR"), \
-					   (confline, "Confidence")])
+	name = get_config_name(radar_file_name) \
+			+ " on " \
+			+ str(datetime.strptime(\
+				os.path.basename(radar_file_name).split("_")[0], \
+							"%Y%m%dT%H%M%S"))
+	multi_plot(name, xline, \
+				[(distline, "Distance from RADAR"), \
+			     (altline, "Altitude above RADAR"), \
+			     (confline, "Confidence")])
 
 # Simple data to display in various forms
 # x = np.linspace(0, 2 * np.pi, 400)
