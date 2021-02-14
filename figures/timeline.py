@@ -1,3 +1,4 @@
+# %matplotlib inline
 """
 file       : timeline.py
 author     : Max von Hippel
@@ -7,12 +8,13 @@ description: the purpose of this file is to make timeline infographics
 works cited: https://stackoverflow.com/a/37738851/1586231
              https://stackoverflow.com/a/43211266/1586231
 """
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import gridspec
 import json
 from geopy import distance
+from mpl_toolkits import mplot3d
+
 
 def two_plot(x, y1, y2):
 	fig = plt.figure()
@@ -89,18 +91,30 @@ def distance_km(lat1, lon1, lat2, lon2):
 def get_radar_points(radar_file_name):
 	points = []
 	with open(radar_file_name, "r") as fr:
-		stuff = json.loads(fr)
+		stuff = json.loads(fr.read())
 		for entry in stuff:
-			(x, y, z) = (entry["xest", "yest", "zest"])
+			(x, y, z) = (entry["xest"], entry["yest"], entry["zest"])
 			# dist = (x ** 2 + y ** 2 + z ** 2) ** 0.5
 			time = entry["timeStamp"]
 			conf = entry["confidenceLevel"]
-			points.append(time, conf, x, y, z)
-	print(points)
+			points.append((time, conf, x, y, z))
+	return points
+
+def plot_radar_points(radar_file_name):
+	fig = plt.figure()
+	ax = plt.axes(projection='3d')
+	points = get_radar_points(radar_file_name)
+	xline = [p[2] for p in points]
+	yline = [p[3] for p in points]
+	zline = [p[4] for p in points]
+	ax.scatter3D(xline, yline, zline, c=zline, cmap='Greens')
+	plt.show()
 
 # Simple data to display in various forms
-x = np.linspace(0, 2 * np.pi, 400)
-y1 = np.sin(x ** 2)
-y2 = np.cos(x ** 3)
+# x = np.linspace(0, 2 * np.pi, 400)
+# y1 = np.sin(x ** 2)
+# y2 = np.cos(x ** 3)
 
-two_plot(x, y1, y2)
+# two_plot(x, y1, y2)
+
+plot_radar_points("../build/logs/alaska/01.26.21/linux/20210126T072518_radar.log")
