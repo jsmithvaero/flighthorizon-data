@@ -7,6 +7,7 @@ description: the purpose of this file is to make timeline infographics
              illustrating data collection
 works cited: https://stackoverflow.com/a/37738851/1586231
              https://stackoverflow.com/a/43211266/1586231
+             https://stackoverflow.com/q/15908371/1586231
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,6 +15,7 @@ from matplotlib import gridspec
 import json
 from geopy import distance
 from mpl_toolkits import mplot3d
+import matplotlib.colors
 
 
 def two_plot(x, y1, y2):
@@ -56,6 +58,13 @@ def get_config_location(radar_file_name):
 
 def distance_km(lat1, lon1, lat2, lon2):
 	return distance.distance(lat1, lon1, lat2, lon2).km
+
+cmap = matplotlib\
+		.colors\
+		.LinearSegmentedColormap.from_list("", ["red", "violet", "blue"])
+
+norm = plt.Normalize(0, 100)
+
 
 """
 {"id":"-2147483648",
@@ -103,11 +112,17 @@ def get_radar_points(radar_file_name):
 def plot_radar_points(radar_file_name):
 	fig = plt.figure()
 	ax = plt.axes(projection='3d')
+	ax.set_ylabel('Δy from RADAR')
+	ax.set_xlabel('Δx from RADAR')
+	ax.set_zlabel('Δz from RADAR')
 	points = get_radar_points(radar_file_name)
 	xline = [p[2] for p in points]
 	yline = [p[3] for p in points]
 	zline = [p[4] for p in points]
-	ax.scatter3D(xline, yline, zline, c=zline, cmap='Greens')
+	cline = [p[1] for p in points]
+	im = ax.scatter3D(xline, yline, zline, c=cline, cmap=cmap, norm=norm)
+	cbar = fig.colorbar(im, ax=ax)
+	cbar.set_label('Confidence', rotation=270)
 	plt.show()
 
 # Simple data to display in various forms
