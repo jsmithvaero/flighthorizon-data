@@ -54,8 +54,3 @@ for day, contents in rows.items():
 	print("\n" + day + " - saw IDs: " + ",".join(list(set(icaos[day]))))
 	print("\n")
 	print(tabulate(sorted(contents), headers=["File", "Protocol", "Number of IDs", "First Packet", "Last Packet", "Minutes First to Last", "IDs/Minute", "OS"]))
-# for day, contents in day_to_contents.items():
-# 	print(str(day) + ":")
-# 	for (file, num) in day_to_contents[day]:
-# 		print("\t" + str(num) + " tracks recorded in " + file) 
-# 	print("= " + str(sum([num for (file, num) in day_to_contents[day]])) + " tracks recorded on " + str(day))
