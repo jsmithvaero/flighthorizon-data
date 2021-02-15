@@ -12,6 +12,7 @@ works cited: https://stackoverflow.com/a/37738851/1586231
              	     subplot.html#sphx-glr-gallery-subplots-axes-and-figures
              	     -subplot-py
              https://stackoverflow.com/a/55690467/1586231
+usage      : python3 figures/radarMaps.py ../build/logs/alaska/01.29.21/
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,7 +80,12 @@ def multi_plot(name, x, named_ys):
 
 	# remove vertical gap between subplots
 	plt.subplots_adjust(hspace=.0)
-	plt.show()
+	# plt.show()
+	plt.savefig(name.replace("[", "_")\
+		            .replace("]", "_")\
+		            .replace(" ", "-")\
+		            .replace("/", ".")\
+		            .replace("\\", ".") + ".png")
 
 def get_config_name(radar_file_name):
 	try:
@@ -160,6 +166,42 @@ def get_radar_points(radar_file_name):
 			points.append((time, conf, x, y, z))
 	return points
 
+def get_mavlink_points(mavlink_file_name):
+	points = []
+	with open(mavlink_file_name, "r") as fr:
+		stuff = json.loads(fr.read())
+		for entry in stuff:
+			(x, y, z) = (entry["latitude"],  \
+				         entry["longitude"], \
+				         entry["altitude"])
+			time = None
+			try:
+				time = datetime.strptime(entry["timeStamp"], \
+					                     "%Y-%m-%dT%H:%M:%S.%fZ")
+			except:
+				time = datetime.strptime(entry["timeStamp"], \
+					                     "%Y-%m-%dT%H:%M:%SZ")
+			points.append((time, x, y, z))
+	return points
+
+def get_adsb_points(adsb_file_name):
+	points = []
+	with open(mavlink_file_name, "r") as fr:
+		stuff = json.loads(fr.read())
+		for entry in stuff:
+			(x, y, z) = (entry["latDD"],  \
+				         entry["lonDD"], \
+				         entry["altitudeMM"])
+			time = None
+			try:
+				time = datetime.strptime(entry["timeStamp"], \
+					                     "%Y-%m-%dT%H:%M:%S.%fZ")
+			except:
+				time = datetime.strptime(entry["timeStamp"], \
+					                     "%Y-%m-%dT%H:%M:%SZ")
+			points.append((time, x, y, z))
+	return points
+
 def get_many_radar_points(\
 	radar_path, default="echoguard"):
 	points = {}
@@ -175,6 +217,16 @@ def get_many_radar_points(\
 			points[subname] = subpoints
 	return points
 
+def get_many_adsb_and_mavlink_points(file_path):
+	points = {}
+	for file in glob(file_path + "**/*adsb.log", recursive=True):
+		subpoints = get_adsb_points(file)
+		points["adsb"] += subpoints
+	for file in glob(file_path + "**/*mavlink.log", recursive=True):
+		subpoints = get_mavlink_points(file)
+		points["mavlink"] += subpoints
+	return points
+		
 def plot_radar_points(points, radar_file_name=None):
 	fig = plt.figure()
 	title = "RADAR data - "
@@ -194,8 +246,21 @@ def plot_radar_points(points, radar_file_name=None):
 	cbar.set_label('Confidence', rotation=270)
 	plt.show()
 
-def plot_radar_xys(points):
+def plot_radar_xys(points, truth=None):
 	stuff_to_plot = []
+
+	# expect that truth = { mavlink: data, adsb: data }
+	# where each data is of the form [ ...., (time, lat, lon, alt), ...]
+
+	# if truth != None:
+	# 	for key, value in truth.items():
+	# 		if len(value) > 0:
+	# 			time_series = []
+				# dist_series = []
+				# alt_series = []
+				# for (time, lat, lon, alt) in value:
+				# 	time_series.append(time)
+					# dist_series.append()
 	
 	_xline = set()
 	for key, value in points.items():
@@ -228,7 +293,7 @@ def plot_radar_xys(points):
 			blocks.append([])
 		blocks[-1].append(xline[j])
 
-	# print("NUMBER OF BLOCKS = " + str(len(blocks)))
+	print("NUMBER OF BLOCKS = " + str(len(blocks)))
 
 	for block in blocks:
 		begin = block[0]
@@ -249,10 +314,8 @@ def plot_radar_xys(points):
 			block,
 			stuff_to_plot_in_block)
 
-
-	# multi_plot("Radars", xline, stuff_to_plot)
-
 full_radar_data = get_many_radar_points(sys.argv[1])
+# full_truth_data = get_many_adsb_and_mavlink_points(sys.argv[1])
 
 # plot_radar_points(full_radar_data)
 plot_radar_xys(full_radar_data)
