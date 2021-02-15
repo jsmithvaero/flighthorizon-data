@@ -24,6 +24,8 @@ import os
 import matplotlib.units as munits
 import matplotlib.dates as mdates
 from datetime import datetime, date
+from glob import glob
+import sys
 
 converter = mdates.ConciseDateConverter()
 munits.registry[np.datetime64] = converter
@@ -49,22 +51,22 @@ def multi_plot(name, x, named_ys):
 	# log scale for axis Y of the first subplot
 	ax0.set_yscale("linear")
 
-	(y1, name1) = named_ys[0]
+	(xbase, y1, name1) = named_ys[0]
 
-	line0, = ax0.plot(x, y1, 'o', color='r')
+	line0, = ax0.plot(xbase, y1, 'o', color='r')
 	plt.ylabel(name1)
 
 	i = 1
 
 	colors = ['green', 'blue', 'black', 'purple']
 
-	for (yi, namei) in named_ys[1:]:
+	for (xi, yi, namei) in named_ys[1:]:
 
 		# the second subplot
 		# shared axis X
 		ax1 = plt.subplot(gs[i], sharex=ax0)
 		plt.ylabel(namei)
-		line1, = ax1.plot(x, yi, 'o', color=colors[i % 4])
+		line1, = ax1.plot(xi, yi, 'o', color=colors[i % 4])
 		plt.setp(ax0.get_xticklabels(), visible=False)
 		ax1.xaxis.set_major_locator(plt.MaxNLocator(20))
 		# remove last tick label for the second subplot
@@ -80,10 +82,13 @@ def multi_plot(name, x, named_ys):
 	plt.show()
 
 def get_config_name(radar_file_name):
-	radar_config_file_name = radar_file_name.replace(".log", "_config.log")
-	with open(radar_config_file_name, "r") as fr:
-		stuff = json.loads(fr.read())
-		return stuff["name"]
+	try:
+		radar_config_file_name = radar_file_name.replace(".log", "_config.log")
+		with open(radar_config_file_name, "r") as fr:
+			stuff = json.loads(fr.read())
+			return stuff["name"]
+	except:
+		return None
 
 def get_config_location(radar_file_name):
 	radar_config_file_name = radar_file_name.replace(".log", "_config.log")
@@ -155,16 +160,31 @@ def get_radar_points(radar_file_name):
 			points.append((time, conf, x, y, z))
 	return points
 
-def plot_radar_points(radar_file_name):
+def get_many_radar_points(\
+	radar_path, default="echoguard"):
+	points = {}
+	print(radar_path)
+	for file in glob(radar_path + "**/*radar.log", recursive=True):
+		subpoints = get_radar_points(file)
+		subname = get_config_name(file)
+		if subname == None:
+			subname = default
+		if subname in points:
+			points[subname] += subpoints
+		else:
+			points[subname] = subpoints
+	return points
+
+def plot_radar_points(points, radar_file_name=None):
 	fig = plt.figure()
-	fig.suptitle("RADAR data - " \
-		+ os.path.basename(radar_file_name)\
-			.replace(".log", ""))
+	title = "RADAR data - "
+	if radar_file_name != None:
+		title += os.path.basename(radar_file_name).replace(".log", "")
+	fig.suptitle(title)
 	ax = plt.axes(projection='3d')
 	ax.set_ylabel('Δy from RADAR')
 	ax.set_xlabel('Δx from RADAR')
 	ax.set_zlabel('Δz from RADAR')
-	points = get_radar_points(radar_file_name)
 	xline = [p[2] for p in points]
 	yline = [p[3] for p in points]
 	zline = [p[4] for p in points]
@@ -174,31 +194,36 @@ def plot_radar_points(radar_file_name):
 	cbar.set_label('Confidence', rotation=270)
 	plt.show()
 
-def plot_radar_xys(radar_file_name):
-	points = get_radar_points(radar_file_name)
-	xline = [p[0] for p in points]
-	altline = [p[3] for p in points]
-	distline = [(p[2] ** 2 + p[3] ** 2 + p[4] ** 2) ** 0.5 for p in points]
-	confline = [p[1] for p in points]
-	name = get_config_name(radar_file_name) \
-			+ " on " \
-			+ str(datetime.strptime(\
-				os.path.basename(radar_file_name).split("_")[0], \
-							"%Y%m%dT%H%M%S"))
-	multi_plot(name, xline, \
-				[(distline, "Distance from RADAR"), \
-			     (altline, "Altitude above RADAR"), \
-			     (confline, "Confidence")])
+def plot_radar_xys(points):
+	stuff_to_plot = []
+	
+	_xline = set()
+	for key, value in points.items():
+		for p in value:
+			_xline.add(p[0])
+	xline = sorted(list(_xline))
+	xindex = { }
+	i = 0
+	for p in xline:
+		xindex[p] = i
+		i += 1
 
-# Simple data to display in various forms
-# x = np.linspace(0, 2 * np.pi, 400)
-# y1 = np.sin(x ** 2)
-# y2 = np.cos(x ** 3)
+	n = len(xline)
 
-# two_plot(x, y1, y2)
+	for key, value in points.items():
 
-# plot_radar_points(demo_radar_file)
+		altline = [p[3] for p in value]
+		distline = [(p[2] ** 2 + p[3] ** 2 + p[4] ** 2) ** 0.5 for p in value]
+		confline = [p[1] for p in value]
+		sub_xline = [p[0] for p in value]
 
+		stuff_to_plot.append((sub_xline, distline, "Distance from " + key))
+		stuff_to_plot.append((sub_xline, altline, "Altitude above " + key))
+		stuff_to_plot.append((sub_xline, confline, "Confidence of " + key))
 
+	multi_plot("Radars", xline, stuff_to_plot)
 
-plot_radar_xys(demo_radar_file)
+full_radar_data = get_many_radar_points(sys.argv[1])
+
+# plot_radar_points(full_radar_data)
+plot_radar_xys(full_radar_data)
