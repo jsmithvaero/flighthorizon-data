@@ -221,7 +221,36 @@ def plot_radar_xys(points):
 		stuff_to_plot.append((sub_xline, altline, "Altitude above " + key))
 		stuff_to_plot.append((sub_xline, confline, "Confidence of " + key))
 
-	multi_plot("Radars", xline, stuff_to_plot)
+	# Let's break the data into blocks.
+	blocks = [[xline[0]]]
+	for j in range(1, len(xline)):
+		if ((xline[j] - xline[j - 1]).total_seconds() / 60) > 10:
+			blocks.append([])
+		blocks[-1].append(xline[j])
+
+	# print("NUMBER OF BLOCKS = " + str(len(blocks)))
+
+	for block in blocks:
+		begin = block[0]
+		end = block[-1]
+		stuff_to_plot_in_block = []
+		for stuff in stuff_to_plot:
+			sub_stuff = []
+			for i in range(len(stuff[0])):
+				x = stuff[0][i]
+				y = stuff[1][i]
+				if x >= begin and x <= end:
+					sub_stuff.append((x, y))
+			if len(sub_stuff) > 0:
+				stuff_to_plot_in_block.append(([x for x, _ in sub_stuff], \
+					                           [y for _, y in sub_stuff], \
+					                           stuff[2]))
+		multi_plot("Radars [" + str(begin) + " to " + str(end) + "]", \
+			block,
+			stuff_to_plot_in_block)
+
+
+	# multi_plot("Radars", xline, stuff_to_plot)
 
 full_radar_data = get_many_radar_points(sys.argv[1])
 
