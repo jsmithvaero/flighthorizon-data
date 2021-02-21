@@ -319,24 +319,24 @@ def get_many_adsb_and_mavlink_points(file_path):
 		points["mavlink"] += subpoints
 	return points
 		
-def plot_radar_points(points, radar_file_name=None):
-	fig = plt.figure()
-	title = "RADAR data - "
-	if radar_file_name != None:
-		title += os.path.basename(radar_file_name).replace(".log", "")
-	fig.suptitle(title)
-	ax = plt.axes(projection='3d')
-	ax.set_ylabel('Δy from RADAR')
-	ax.set_xlabel('Δx from RADAR')
-	ax.set_zlabel('Δz from RADAR')
-	xline = [p[2] for p in points]
-	yline = [p[3] for p in points]
-	zline = [p[4] for p in points]
-	cline = [p[1] for p in points]
-	im = ax.scatter3D(xline, yline, zline, c=cline, cmap=cmap, norm=norm)
-	cbar = fig.colorbar(im, ax=ax)
-	cbar.set_label('Confidence', rotation=270)
-	plt.show()
+# def plot_radar_points(points, radar_file_name=None):
+# 	fig = plt.figure()
+# 	title = "RADAR data - "
+# 	if radar_file_name != None:
+# 		title += os.path.basename(radar_file_name).replace(".log", "")
+# 	fig.suptitle(title)
+# 	ax = plt.axes(projection='3d')
+# 	ax.set_ylabel('Δy from RADAR')
+# 	ax.set_xlabel('Δx from RADAR')
+# 	ax.set_zlabel('Δz from RADAR')
+# 	xline = [p[2] for p in points]
+# 	yline = [p[3] for p in points]
+# 	zline = [p[4] for p in points]
+# 	cline = [p[1] for p in points]
+# 	im = ax.scatter3D(xline, yline, zline, c=cline, cmap=cmap, norm=norm)
+# 	cbar = fig.colorbar(im, ax=ax)
+# 	cbar.set_label('Confidence', rotation=270)
+# 	plt.show()
 
 def plot_radar_xys(points, truth=None):
 	stuff_to_plot = []
@@ -370,8 +370,10 @@ def plot_radar_xys(points, truth=None):
 
 	for key, value in points.items():
 
-		altline = [p[3] for p in value]
-		distline = [p[4] for p in value]
+		# (time, confidence, lat, lon, alt, distance)
+
+		altline = [p[4] for p in value]
+		distline = [p[5] for p in value]
 		confline = [p[1] for p in value]
 		sub_xline = [p[0] for p in value]
 
