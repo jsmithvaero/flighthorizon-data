@@ -1,6 +1,6 @@
 # %matplotlib inline
 """
-file       : timeline.py
+file       : radarFigs.py
 author     : Max von Hippel
 authored   : 14 February 2021
 description: the purpose of this file is to make timeline infographics 
