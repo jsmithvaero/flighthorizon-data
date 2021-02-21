@@ -55,31 +55,40 @@ def multi_plot(name, x, named_ys):
 	fig = plt.figure()
 	fig.suptitle(name)
 	# set height ratios for subplots
-	gs = gridspec.GridSpec(len(named_ys), 1, height_ratios=[1] * len(named_ys)) 
+	K = 1 if len(named_ys) <= 3 else 2
+	gs = gridspec.GridSpec(\
+		len(named_ys), \
+		1, \
+		height_ratios=[K] * len(named_ys)) 
 
 	# the first subplot
 	ax0 = plt.subplot(gs[0])
 	# log scale for axis Y of the first subplot
 	ax0.set_yscale("linear")
+	ax0.xaxis.set_visible(False)
 
 	(xbase, y1, name1) = named_ys[0]
 
 	line0, = ax0.plot(xbase, y1, 'o', color='r')
-	plt.ylabel(name1)
+	plt.ylabel(name1, rotation='horizontal', ha='right', labelpad=20)
 
 	i = 1
 
 	colors = ['green', 'blue', 'black', 'purple']
+
+	last = len(named_ys) - 1
 
 	for (xi, yi, namei) in named_ys[1:]:
 
 		# the second subplot
 		# shared axis X
 		ax1 = plt.subplot(gs[i], sharex=ax0)
-		plt.ylabel(namei)
+		plt.ylabel(namei, rotation='horizontal', ha='right', labelpad=20)
 		line1, = ax1.plot(xi, yi, 'o', color=colors[i % 4])
 		plt.setp(ax0.get_xticklabels(), visible=False)
 		ax1.xaxis.set_major_locator(plt.MaxNLocator(20))
+		ax1.xaxis.set_visible(i == last)
+		# plt.xticks(rotation=60)
 		# remove last tick label for the second subplot
 		yticks = ax1.yaxis.get_major_ticks()
 		yticks[-1].label1.set_visible(False)
@@ -90,6 +99,7 @@ def multi_plot(name, x, named_ys):
 
 	# remove vertical gap between subplots
 	plt.subplots_adjust(hspace=.0)
+	plt.xticks(rotation=60)
 	plt.tight_layout()
 
 	# plt.show()
@@ -377,7 +387,7 @@ def plot_radar_xys(points, truth=None):
 		confline = [p[1] for p in value]
 		sub_xline = [p[0] for p in value]
 
-		stuff_to_plot.append((sub_xline, distline, "Horizonatl Distance (km)\nfrom " + key))
+		stuff_to_plot.append((sub_xline, distline, "Horizontal\nDistance (km)\nfrom " + key))
 		stuff_to_plot.append((sub_xline, altline, "Altitude (m)\nabove " + key))
 		stuff_to_plot.append((sub_xline, confline, "Confidence of\n" + key))
 
@@ -405,7 +415,11 @@ def plot_radar_xys(points, truth=None):
 				stuff_to_plot_in_block.append(([x for x, _ in sub_stuff], \
 					                           [y for _, y in sub_stuff], \
 					                           stuff[2]))
-		multi_plot("Radars [" + str(begin) + " to " + str(end) + "]", \
+		multi_plot("Radars " + str(begin.time().strftime("%H:%M:%S")) \
+			                 + " - "                                  \
+			                 + str(end.time().strftime("%H:%M:%S"))   \
+			                 + ", "                                   \
+			                 + str(begin.date()),                     \
 			block,
 			stuff_to_plot_in_block)
 
