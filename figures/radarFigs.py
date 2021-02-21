@@ -12,6 +12,8 @@ works cited: https://stackoverflow.com/a/37738851/1586231
              	     subplot.html#sphx-glr-gallery-subplots-axes-and-figures
              	     -subplot-py
              https://stackoverflow.com/a/55690467/1586231
+             https://www.kite.com/python/answers/how-to-find-the-distance-
+             		 between-two-lat-long-coordinates-in-python
 usage      : python3 figures/radarMaps.py ../build/logs/alaska/01.29.21/
 """
 import matplotlib.pyplot as plt
@@ -27,25 +29,33 @@ import matplotlib.dates as mdates
 from datetime import datetime, date
 from glob import glob
 import sys
+import math
 
 converter = mdates.ConciseDateConverter()
 munits.registry[np.datetime64] = converter
 munits.registry[date] = converter
 munits.registry[datetime] = converter
 
-matplotlib.rc('font', size=12)
+matplotlib.rc('font', size=8)
 # matplotlib.rc('axes', titlesize=10)
 
 demo_radar_file = \
 	"../build/logs/alaska/01.26.21/linux/20210126T072518_radar.log"
 
+def calculateTargetBearing(_azimuth, _radar_orientation):
+	tmp_bearing = None
+	if (_azimuth <= 0):
+		tmp_bearing = -1 * _azimuth
+	else:
+		tmp_bearing = 360 - _azimuth
+	return tmp_bearing + _radar_orientation
 
 # def two_plot(x, y1, name1, y2, name2):
 def multi_plot(name, x, named_ys):
 	fig = plt.figure()
 	fig.suptitle(name)
 	# set height ratios for subplots
-	gs = gridspec.GridSpec(len(named_ys), 1, height_ratios=[1]*len(named_ys)) 
+	gs = gridspec.GridSpec(len(named_ys), 1, height_ratios=[1] * len(named_ys)) 
 
 	# the first subplot
 	ax0 = plt.subplot(gs[0])
@@ -80,12 +90,14 @@ def multi_plot(name, x, named_ys):
 
 	# remove vertical gap between subplots
 	plt.subplots_adjust(hspace=.0)
+	plt.tight_layout()
+
 	# plt.show()
 	plt.savefig(name.replace("[", "_")\
 		            .replace("]", "_")\
 		            .replace(" ", "-")\
 		            .replace("/", ".")\
-		            .replace("\\", ".") + ".png")
+		            .replace("\\", ".") + ".png", dpi=200)
 
 def get_config_name(radar_file_name):
 	try:
@@ -98,17 +110,88 @@ def get_config_name(radar_file_name):
 
 def get_config_location(radar_file_name):
 	radar_config_file_name = radar_file_name.replace(".log", "_config.log")
-	lat, lon = None, None
-	with open(radar_config_file_name, "r") as fr:
-		stuff = json.loads(fr.read())
-		lon = stuff["longitude"]["value"]
-		lat = stuff["latitude"]["value"]
-		assert("°".equals(stuff["longitude"]["unit"]))
-		assert("°".equals(stuff["latitude"]["unit"]))
-	return lat, lon
+	lat, lon, alt, ori = None, None, None, None
+	try:
+		with open(radar_config_file_name, "r") as fr:
+			stuff = json.loads(fr.read())
+			lon = stuff["receiver"]["longitude"]["value"]
+			lat = stuff["receiver"]["latitude"]["value"]
+			alt = stuff["receiver"]["elevation"]["value"]
+			ori = stuff["receiver"]["orientation"]["value"]
+			assert("°" == stuff["receiver"]["longitude"]["unit"])
+			assert("°" == stuff["receiver"]["latitude"]["unit"])
+			assert("m" == stuff["receiver"]["elevation"]["unit"])
+			assert("°" == stuff["receiver"]["orientation"]["unit"])
+		return lat, lon, alt, ori
+	except:
+		print("TODO - deal with these radar files that lack configs")
+		return None
+
+# https://stackoverflow.com/a/7835325/1586231
+def calculateTargetPosition(_range, _azimuth, _elevation, receiver):
+	(lat1, lon1, alt1, radar_orientation) = receiver
+	# print("lat1:", lat1, " degrees")
+	# print("lon1:", lon1, " degrees")
+	# print("alt1:", alt1, " meters")
+	# print("radar orientation:", radar_orientation, " degrees")
+	
+	horizontal_distance = _range * math.cos(math.radians(_elevation)) # METERs
+	vertical_distance   = _range * math.sin(math.radians(_elevation)) # METERs
+	bearing             = calculateTargetBearing(_azimuth, radar_orientation) # DEGREE_ANGLE
+
+	# print("horizontal_distance:", horizontal_distance, " meters")
+	# print("vertical_distance:", vertical_distance, " meters")
+	# print("bearing:", bearing, " degrees")
+
+	R = 6.371009 * (10 ** 6) + alt1
+
+	# print("R:", R, " meters")
+
+	bearing_radians = math.radians(bearing)
+
+	# print("bearing_radians: ", bearing_radians)
+
+	lat1 = math.radians(lat1)
+	lon1 = math.radians(lon1)
+	
+	lat2 = math.asin(
+		math.sin(lat1) * math.cos(horizontal_distance / R) +
+    	math.cos(lat1) * math.sin(horizontal_distance / R) * math.cos(bearing_radians))
+
+	lon2 = lon1 + math.atan2(
+				math.sin(bearing_radians) * math.sin(horizontal_distance / R) * math.cos(lat1),
+             	math.cos(horizontal_distance / R) - math.sin(lat1) * math.sin(lat2))
+
+	lat2 = math.degrees(lat2)
+	lon2 = math.degrees(lon2)
+	alt2 = alt1 + vertical_distance
+
+	# print("lat2:", lat2)
+	# print("lon2:", lon2)
+	# print("alt2:", alt2)
+
+	return (lat2, lon2, alt2)
 
 def distance_km(lat1, lon1, lat2, lon2):
-	return distance.distance(lat1, lon1, lat2, lon2).km
+	if (lat1, lon1) == (lat2, lon2):
+		return 0
+	R = 6373.0 # radius of the Earth in km
+	lat1 = math.radians(lat1)
+	lon1 = math.radians(lon1)
+	lat2 = math.radians(lat2)
+	lon2 = math.radians(lon2)
+	dlon = lon2 - lon1
+	dlat = lat2 - lat1
+	
+	# Haversine formula
+	a = math.sin(dlat / 2) ** 2 \
+	  + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+
+	c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+	
+	distance = R * c
+
+	return distance
 
 cmap = matplotlib\
 		.colors\
@@ -149,12 +232,20 @@ norm = plt.Normalize(0, 100)
  "timeStamp":"2021-01-26T19:14:44.518Z"}
 """
 def get_radar_points(radar_file_name):
+	receiver = get_config_location(radar_file_name)
+	if receiver == None:
+		print("Not plotting " \
+			+ radar_file_name \
+			+ ", because we lack the RADAR configuration file.")
+		return None
 	points = []
 	with open(radar_file_name, "r") as fr:
 		stuff = json.loads(fr.read())
 		for entry in stuff:
-			(x, y, z) = (entry["xest"], entry["yest"], entry["zest"])
-			# dist = (x ** 2 + y ** 2 + z ** 2) ** 0.5
+			(rn, az, el) = (entry["rest"], entry["azest"], entry["elest"])
+			(lat, lon, alt) = calculateTargetPosition(rn, az, el, receiver)
+			# print("Passing in: ", lat, lon, receiver[0], receiver[1])
+			dist = distance_km(lat, lon, receiver[0], receiver[1])
 			time = None
 			try:
 				time = datetime.strptime(entry["timeStamp"], \
@@ -163,7 +254,7 @@ def get_radar_points(radar_file_name):
 				time = datetime.strptime(entry["timeStamp"], \
 					                     "%Y-%m-%dT%H:%M:%SZ")
 			conf = entry["confidenceLevel"]
-			points.append((time, conf, x, y, z))
+			points.append((time, conf, lat, lon, alt, dist))
 	return points
 
 def get_mavlink_points(mavlink_file_name):
@@ -205,16 +296,17 @@ def get_adsb_points(adsb_file_name):
 def get_many_radar_points(\
 	radar_path, default="echoguard"):
 	points = {}
-	print(radar_path)
+	# print(radar_path)
 	for file in glob(radar_path + "**/*radar.log", recursive=True):
 		subpoints = get_radar_points(file)
-		subname = get_config_name(file)
-		if subname == None:
-			subname = default
-		if subname in points:
-			points[subname] += subpoints
-		else:
-			points[subname] = subpoints
+		if subpoints != None:
+			subname = get_config_name(file)
+			if subname == None:
+				subname = default
+			if subname in points:
+				points[subname] += subpoints
+			else:
+				points[subname] = subpoints
 	return points
 
 def get_many_adsb_and_mavlink_points(file_path):
@@ -250,7 +342,8 @@ def plot_radar_xys(points, truth=None):
 	stuff_to_plot = []
 
 	# expect that truth = { mavlink: data, adsb: data }
-	# where each data is of the form [ ...., (time, lat, lon, alt), ...]
+	# where each data is of the form [ ...., (time, lat, lon, alt, dist), ...]
+	#                                           [0]  [1]  [2]  [3]   [4]
 
 	# if truth != None:
 	# 	for key, value in truth.items():
@@ -278,13 +371,13 @@ def plot_radar_xys(points, truth=None):
 	for key, value in points.items():
 
 		altline = [p[3] for p in value]
-		distline = [(p[2] ** 2 + p[3] ** 2 + p[4] ** 2) ** 0.5 for p in value]
+		distline = [p[4] for p in value]
 		confline = [p[1] for p in value]
 		sub_xline = [p[0] for p in value]
 
-		stuff_to_plot.append((sub_xline, distline, "Distance from " + key))
-		stuff_to_plot.append((sub_xline, altline, "Altitude above " + key))
-		stuff_to_plot.append((sub_xline, confline, "Confidence of " + key))
+		stuff_to_plot.append((sub_xline, distline, "Horizonatl Distance (km)\nfrom " + key))
+		stuff_to_plot.append((sub_xline, altline, "Altitude (m)\nabove " + key))
+		stuff_to_plot.append((sub_xline, confline, "Confidence of\n" + key))
 
 	# Let's break the data into blocks.
 	blocks = [[xline[0]]]
