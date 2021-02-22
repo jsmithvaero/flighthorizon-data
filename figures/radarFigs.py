@@ -275,12 +275,13 @@ def get_mavlink_points(mavlink_file_name):
 
 def get_adsb_points(adsb_file_name):
 	points = []
-	with open(mavlink_file_name, "r") as fr:
+	with open(adsb_file_name, "r") as fr:
 		stuff = json.loads(fr.read())
 		for entry in stuff:
-			(x, y, z) = (entry["latDD"],  \
-				         entry["lonDD"], \
-				         entry["altitudeMM"])
+			(lat, lon, alt) = (entry["latDD"],  \
+				               entry["lonDD"], \
+				               entry["altitudeMM"])
+			alt = float(alt) / 1000 # mm -> m
 			time = None
 			try:
 				time = datetime.strptime(entry["timeStamp"], \
@@ -288,7 +289,8 @@ def get_adsb_points(adsb_file_name):
 			except:
 				time = datetime.strptime(entry["timeStamp"], \
 					                     "%Y-%m-%dT%H:%M:%SZ")
-			points.append((time, x, y, z))
+			if (lat, lon) != (0.0, 0.0):
+				points.append((time, lat, lon, alt))
 	return points
 
 def get_many_mavlink_points(\
@@ -312,6 +314,12 @@ def get_many_radar_points(\
 				points[subname] += subpoints
 			else:
 				points[subname] = subpoints
+	return points
+
+def get_many_adsb_points(adsb_path):
+	points = set()
+	for file in glob(adsb_path + "**/*adsb.log", recursive=True):
+		points = points.union(set(get_adsb_points(file)))
 	return points
 		
 # def plot_radar_points(points, radar_file_name=None):
@@ -406,7 +414,8 @@ def plot_radar_xyz(points, truth=None):
 
 path_to_search = sys.argv[1]
 full_radar_data = get_many_radar_points(path_to_search)
-full_truth_data = get_many_mavlink_points(path_to_search)
+full_truth_data = get_many_mavlink_points(path_to_search)\
+				  .union(get_many_adsb_points(path_to_search))
 # full_truth_data = get_many_adsb_and_mavlink_points(sys.argv[1])
 
 # plot_radar_points(full_radar_data)
