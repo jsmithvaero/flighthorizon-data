@@ -1,20 +1,20 @@
 # %matplotlib inline
 """
-file       : radarFigs.py
-author     : Max von Hippel
+file	   : radarFigs.py
+author	 : Max von Hippel
 authored   : 14 February 2021
 description: the purpose of this file is to make timeline infographics 
-             illustrating data collection
+			 illustrating data collection
 works cited: https://stackoverflow.com/a/37738851/1586231
-             https://stackoverflow.com/a/43211266/1586231
-             https://stackoverflow.com/q/15908371/1586231
-             https://matplotlib.org/3.1.1/gallery/subplots_axes_and_figures/
-             	     subplot.html#sphx-glr-gallery-subplots-axes-and-figures
-             	     -subplot-py
-             https://stackoverflow.com/a/55690467/1586231
-             https://www.kite.com/python/answers/how-to-find-the-distance-
-             		 between-two-lat-long-coordinates-in-python
-usage      : python3 figures/radarMaps.py ../build/logs/alaska/01.29.21/
+			 https://stackoverflow.com/a/43211266/1586231
+			 https://stackoverflow.com/q/15908371/1586231
+			 https://matplotlib.org/3.1.1/gallery/subplots_axes_and_figures/
+			 		 subplot.html#sphx-glr-gallery-subplots-axes-and-figures
+			 		 -subplot-py
+			 https://stackoverflow.com/a/55690467/1586231
+			 https://www.kite.com/python/answers/how-to-find-the-distance-
+			 		 between-two-lat-long-coordinates-in-python
+usage	  : python3 figures/radarMaps.py ../build/logs/alaska/01.29.21/
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,6 +30,8 @@ from datetime import datetime, date
 from glob import glob
 import sys
 import math
+import pynmea2
+import ntpath
 
 converter = mdates.ConciseDateConverter()
 munits.registry[np.datetime64] = converter
@@ -104,10 +106,10 @@ def multi_plot(name, x, named_ys):
 
 	# plt.show()
 	plt.savefig(name.replace("[", "_")\
-		            .replace("]", "_")\
-		            .replace(" ", "-")\
-		            .replace("/", ".")\
-		            .replace("\\", ".") + ".png", dpi=200)
+					.replace("]", "_")\
+					.replace(" ", "-")\
+					.replace("/", ".")\
+					.replace("\\", ".") + ".png", dpi=200)
 
 def get_config_name(radar_file_name):
 	try:
@@ -147,7 +149,7 @@ def calculateTargetPosition(_range, _azimuth, _elevation, receiver):
 	
 	horizontal_distance = _range * math.cos(math.radians(_elevation)) # METERs
 	vertical_distance   = _range * math.sin(math.radians(_elevation)) # METERs
-	bearing             = calculateTargetBearing(_azimuth, radar_orientation) # DEGREE_ANGLE
+	bearing			 = calculateTargetBearing(_azimuth, radar_orientation) # DEGREE_ANGLE
 
 	# print("horizontal_distance:", horizontal_distance, " meters")
 	# print("vertical_distance:", vertical_distance, " meters")
@@ -166,11 +168,11 @@ def calculateTargetPosition(_range, _azimuth, _elevation, receiver):
 	
 	lat2 = math.asin(
 		math.sin(lat1) * math.cos(horizontal_distance / R) +
-    	math.cos(lat1) * math.sin(horizontal_distance / R) * math.cos(bearing_radians))
+		math.cos(lat1) * math.sin(horizontal_distance / R) * math.cos(bearing_radians))
 
 	lon2 = lon1 + math.atan2(
 				math.sin(bearing_radians) * math.sin(horizontal_distance / R) * math.cos(lat1),
-             	math.cos(horizontal_distance / R) - math.sin(lat1) * math.sin(lat2))
+			 	math.cos(horizontal_distance / R) - math.sin(lat1) * math.sin(lat2))
 
 	lat2 = math.degrees(lat2)
 	lon2 = math.degrees(lon2)
@@ -228,10 +230,10 @@ def get_radar_points(radar_file_name):
 			time = None
 			try:
 				time = datetime.strptime(entry["timeStamp"], \
-					                     "%Y-%m-%dT%H:%M:%S.%fZ")
+										 "%Y-%m-%dT%H:%M:%S.%fZ")
 			except:
 				time = datetime.strptime(entry["timeStamp"], \
-					                     "%Y-%m-%dT%H:%M:%SZ")
+										 "%Y-%m-%dT%H:%M:%SZ")
 			conf = entry["confidenceLevel"]
 			points.append((time, conf, lat, lon, alt, dist))
 	return points
@@ -258,17 +260,17 @@ def get_mavlink_points(mavlink_file_name):
 		stuff = json.loads(fr.read())
 		for entry in stuff:
 			(lat, lon, alt) = (entry["latitude"],  \
-				               entry["longitude"], \
-				               entry["altitude"])
+							   entry["longitude"], \
+							   entry["altitude"])
 			lat, lon = mavlink_coords(lat, lon)
 			alt = float(alt) / 100 # cm -> m
 			time = None
 			try:
 				time = datetime.strptime(entry["timeStamp"], \
-					                     "%Y-%m-%dT%H:%M:%S.%fZ")
+										 "%Y-%m-%dT%H:%M:%S.%fZ")
 			except:
 				time = datetime.strptime(entry["timeStamp"], \
-					                     "%Y-%m-%dT%H:%M:%SZ")
+										 "%Y-%m-%dT%H:%M:%SZ")
 			if (lat, lon, alt) != (0.0, 0.0, 0.0):
 				points.append((time, lat, lon, alt))
 	return points
@@ -279,27 +281,43 @@ def get_adsb_points(adsb_file_name):
 		stuff = json.loads(fr.read())
 		for entry in stuff:
 			(lat, lon, alt) = (entry["latDD"],  \
-				               entry["lonDD"], \
-				               entry["altitudeMM"])
+							   entry["lonDD"], \
+							   entry["altitudeMM"])
 			alt = float(alt) / 1000 # mm -> m
 			time = None
 			try:
 				time = datetime.strptime(entry["timeStamp"], \
-					                     "%Y-%m-%dT%H:%M:%S.%fZ")
+										 "%Y-%m-%dT%H:%M:%S.%fZ")
 			except:
 				time = datetime.strptime(entry["timeStamp"], \
-					                     "%Y-%m-%dT%H:%M:%SZ")
+										 "%Y-%m-%dT%H:%M:%SZ")
 			if (lat, lon) != (0.0, 0.0):
 				points.append((time, lat, lon, alt))
+	return points
+
+def get_nmea_points(nmea_file_name, date):
+	points = set()
+	with open(nmea_file_name, "r", encoding='utf-8') as fr:
+		for line in fr:
+			try:
+				msg = pynmea2.parse(line)
+				lat = msg.latitude
+				lon = msg.longitude
+				alt = msg.altitude
+				time = datetime.combine(date, msg.timestamp)
+				points.add((time, lat, lon, alt))
+			except:
+				# who cares :D
+				continue
 	return points
 
 def get_gpx_ponts(gpx_file_name):
 	points = set()
 	"""
 	<trkpt lat="64.803741993382573" lon="-147.88129697553813">
-        <ele>147.69999999999999</ele>
-        <time>2021-01-29T01:06:56Z</time>
-    </trkpt>
+		<ele>147.69999999999999</ele>
+		<time>2021-01-29T01:06:56Z</time>
+	</trkpt>
 	"""
 	with open(gpx_file_name, "r") as fr:
 		lat, lon, ele, time = None, None, None, None
@@ -313,13 +331,27 @@ def get_gpx_ponts(gpx_file_name):
 				time = line.split("<time>")[1].split("</time>")[0]
 				try:
 					time = datetime.strptime(time, \
-					                         "%Y-%m-%dT%H:%M:%S.%fZ")
+											 "%Y-%m-%dT%H:%M:%S.%fZ")
 				except:
 					time = datetime.strptime(time, \
-					                         "%Y-%m-%dT%H:%M:%SZ")
+											 "%Y-%m-%dT%H:%M:%SZ")
 			if (lat != None and lon != None and ele != None and time != None):
 				points.add((time, lat, lon, ele))
 				lat, lon, ele, time = None, None, None, None
+	return points
+
+def get_many_nmea_points(nmea_path):
+	points = set()
+	for file in glob(nmea_path + "**/*.nmea", recursive=True):
+		if "_" in file:
+			year, month, day, _ = ntpath.basename(file).split("_", 3)
+			year = int(year)
+			month = int(month)
+			day = int(day)
+		points = points.union(      \
+					get_nmea_points(\
+						file,       \
+						date(year, month, day)))
 	return points
 
 def get_many_gpx_points(gpx_path):
@@ -436,13 +468,13 @@ def plot_radar_xyz(points, truth=None):
 					sub_stuff.append((x, y))
 			if len(sub_stuff) > 0:
 				stuff_to_plot_in_block.append(([x for x, _ in sub_stuff], \
-					                           [y for _, y in sub_stuff], \
-					                           stuff[2]))
+											   [y for _, y in sub_stuff], \
+											   stuff[2]))
 		multi_plot("Radars " + str(begin.time().strftime("%H:%M:%S")) \
-			                 + " - "                                  \
-			                 + str(end.time().strftime("%H:%M:%S"))   \
-			                 + ", "                                   \
-			                 + str(begin.date()),                     \
+							 + " - "								  \
+							 + str(end.time().strftime("%H:%M:%S"))   \
+							 + ", "								   \
+							 + str(begin.date()),					 \
 			block,
 			stuff_to_plot_in_block)
 
@@ -450,7 +482,8 @@ path_to_search = sys.argv[1]
 full_radar_data = get_many_radar_points(path_to_search)
 full_truth_data = get_many_mavlink_points(path_to_search)\
 				  .union(get_many_adsb_points(path_to_search))\
-				  .union(get_many_gpx_points(path_to_search))
+				  .union(get_many_gpx_points(path_to_search))\
+				  .union(get_many_nmea_points(path_to_search))
 # full_truth_data = get_many_adsb_and_mavlink_points(sys.argv[1])
 
 # plot_radar_points(full_radar_data)

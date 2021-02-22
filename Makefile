@@ -2,6 +2,8 @@
 
 clean: ; - rm *.png
 
+deps: ; pip3 install pynmea2
+
 tables:
 	echo "----------- RADAR -----------"
 	python3 tables/numberTracksRadar.py
