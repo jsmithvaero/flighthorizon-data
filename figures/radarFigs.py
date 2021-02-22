@@ -209,38 +209,7 @@ cmap = matplotlib\
 
 norm = plt.Normalize(0, 100)
 
-
-"""
-{"id":"-2147483648",
- "protocol":null,
- "state":0,
- "azest":0.0,
- "elest":0.0,
- "rest":0.0,
- "xest":0.0,
- "yest":0.0,
- "zest":0.0,
- "velxest":0.0,
- "velyest":0.0,
- "velzest":0.0,
- "associatedMeasurementIDs":[],
- "tocaDays":0,
- "tocaMilliseconds":0,
- "doca":0.0,
- "lifetime":0.0,
- "lastUpdateTimeDays":0,
- "lastUpdateTimeMilliseconds":0,
- "lastAssociatedDataTimeInDays":0,
- "lastAssociatedDataTimeInMilliseconds":0,
- "acquiredTimeDays":0,
- "acquiredTimeMilliseconds":0,
- "confidenceLevel":0.0,
- "numberOfMeasurements":0,
- "estRCS":0.0,
- "probUnknown":0.0,
- "probUAV":0.0,
- "timeStamp":"2021-01-26T19:14:44.518Z"}
-"""
+# TYPE: [ ... (time, conf, lat, lon, alt, dist) ...]
 def get_radar_points(radar_file_name):
 	receiver = get_config_location(radar_file_name)
 	if receiver == None:
@@ -267,14 +236,32 @@ def get_radar_points(radar_file_name):
 			points.append((time, conf, lat, lon, alt, dist))
 	return points
 
+def fix_crappy_mavlink_coordinate(coord):
+	if "E" in str(coord):
+		a, b = s.split("E")
+		a = float(a)
+		b = int(b)
+		c = a * 10 ** b
+	else:
+		c = float(coord)
+	return c / ( 10 ** 7 )
+
+def mavlink_coords(lat, lon):
+	lat = fix_crappy_mavlink_coordinate(str(lat))
+	lon = fix_crappy_mavlink_coordinate(str(lon))
+	return lat, lon
+
+# TYPE: [... (time, lat, lon, alt) ...]
 def get_mavlink_points(mavlink_file_name):
 	points = []
 	with open(mavlink_file_name, "r") as fr:
 		stuff = json.loads(fr.read())
 		for entry in stuff:
-			(x, y, z) = (entry["latitude"],  \
-				         entry["longitude"], \
-				         entry["altitude"])
+			(lat, lon, alt) = (entry["latitude"],  \
+				               entry["longitude"], \
+				               entry["altitude"])
+			lat, lon = mavlink_coords(lat, lon)
+			alt = float(alt) / 100 # cm -> m
 			time = None
 			try:
 				time = datetime.strptime(entry["timeStamp"], \
@@ -282,7 +269,8 @@ def get_mavlink_points(mavlink_file_name):
 			except:
 				time = datetime.strptime(entry["timeStamp"], \
 					                     "%Y-%m-%dT%H:%M:%SZ")
-			points.append((time, x, y, z))
+			if (lat, lon, alt) != (0.0, 0.0, 0.0):
+				points.append((time, lat, lon, alt))
 	return points
 
 def get_adsb_points(adsb_file_name):
@@ -303,6 +291,13 @@ def get_adsb_points(adsb_file_name):
 			points.append((time, x, y, z))
 	return points
 
+def get_many_mavlink_points(\
+	mavlink_path):
+	points = set()
+	for file in glob(mavlink_path + "**/*mavlink.log", recursive=True):
+		points = points.union(set(get_mavlink_points(file)))
+	return points
+
 def get_many_radar_points(\
 	radar_path, default="echoguard"):
 	points = {}
@@ -317,16 +312,6 @@ def get_many_radar_points(\
 				points[subname] += subpoints
 			else:
 				points[subname] = subpoints
-	return points
-
-def get_many_adsb_and_mavlink_points(file_path):
-	points = {}
-	for file in glob(file_path + "**/*adsb.log", recursive=True):
-		subpoints = get_adsb_points(file)
-		points["adsb"] += subpoints
-	for file in glob(file_path + "**/*mavlink.log", recursive=True):
-		subpoints = get_mavlink_points(file)
-		points["mavlink"] += subpoints
 	return points
 		
 # def plot_radar_points(points, radar_file_name=None):
@@ -348,22 +333,8 @@ def get_many_adsb_and_mavlink_points(file_path):
 # 	cbar.set_label('Confidence', rotation=270)
 # 	plt.show()
 
-def plot_radar_xys(points, truth=None):
+def plot_radar_xyz(points, truth=None):
 	stuff_to_plot = []
-
-	# expect that truth = { mavlink: data, adsb: data }
-	# where each data is of the form [ ...., (time, lat, lon, alt, dist), ...]
-	#                                           [0]  [1]  [2]  [3]   [4]
-
-	# if truth != None:
-	# 	for key, value in truth.items():
-	# 		if len(value) > 0:
-	# 			time_series = []
-				# dist_series = []
-				# alt_series = []
-				# for (time, lat, lon, alt) in value:
-				# 	time_series.append(time)
-					# dist_series.append()
 	
 	_xline = set()
 	for key, value in points.items():
@@ -378,13 +349,23 @@ def plot_radar_xys(points, truth=None):
 
 	n = len(xline)
 
+	if truth != None:
+		# TYPE: [... (time, lat, lon, alt) ...]
+		truth_timeline = [p[0] for p in truth]
+		truth_latline  = [p[1] for p in truth]
+		truth_lonline  = [p[2] for p in truth]
+		truth_altline  = [p[3] for p in truth]
+		stuff_to_plot.append((truth_timeline, truth_latline, "True Degrees\nLatitude"))
+		stuff_to_plot.append((truth_timeline, truth_lonline, "True Degrees\nLongitude"))
+		stuff_to_plot.append((truth_timeline, truth_altline, "True Altitude (m)"))
+
 	for key, value in points.items():
 
 		# (time, confidence, lat, lon, alt, distance)
 
-		altline = [p[4] for p in value]
-		distline = [p[5] for p in value]
-		confline = [p[1] for p in value]
+		altline   = [p[4] for p in value]
+		distline  = [p[5] for p in value]
+		confline  = [p[1] for p in value]
 		sub_xline = [p[0] for p in value]
 
 		stuff_to_plot.append((sub_xline, distline, "Horizontal\nDistance (km)\nfrom " + key))
@@ -423,8 +404,10 @@ def plot_radar_xys(points, truth=None):
 			block,
 			stuff_to_plot_in_block)
 
-full_radar_data = get_many_radar_points(sys.argv[1])
+path_to_search = sys.argv[1]
+full_radar_data = get_many_radar_points(path_to_search)
+full_truth_data = get_many_mavlink_points(path_to_search)
 # full_truth_data = get_many_adsb_and_mavlink_points(sys.argv[1])
 
 # plot_radar_points(full_radar_data)
-plot_radar_xys(full_radar_data)
+plot_radar_xyz(full_radar_data, full_truth_data)
