@@ -293,8 +293,42 @@ def get_adsb_points(adsb_file_name):
 				points.append((time, lat, lon, alt))
 	return points
 
-def get_many_mavlink_points(\
-	mavlink_path):
+def get_gpx_ponts(gpx_file_name):
+	points = set()
+	"""
+	<trkpt lat="64.803741993382573" lon="-147.88129697553813">
+        <ele>147.69999999999999</ele>
+        <time>2021-01-29T01:06:56Z</time>
+    </trkpt>
+	"""
+	with open(gpx_file_name, "r") as fr:
+		lat, lon, ele, time = None, None, None, None
+		for line in fr:
+			if "<trkpt" in line and (lat == None and lon == None and ele == None and time == None):
+				lat = float(line.split("lat=\"")[1].split("\"")[0])
+				lon = float(line.split("lon=\"")[1].split("\"")[0])
+			elif "<ele" in line and (lat != None and lon != None and ele == None and time == None):
+				ele = float(line.split("<ele>")[1].split("</ele>")[0])
+			elif "<time" in line and (lat != None and lon != None and ele != None and time == None):
+				time = line.split("<time>")[1].split("</time>")[0]
+				try:
+					time = datetime.strptime(time, \
+					                         "%Y-%m-%dT%H:%M:%S.%fZ")
+				except:
+					time = datetime.strptime(time, \
+					                         "%Y-%m-%dT%H:%M:%SZ")
+			if (lat != None and lon != None and ele != None and time != None):
+				points.add((time, lat, lon, ele))
+				lat, lon, ele, time = None, None, None, None
+	return points
+
+def get_many_gpx_points(gpx_path):
+	points = set()
+	for file in glob(gpx_path + "**/*.gpx", recursive=True):
+		points = points.union(set(get_gpx_ponts(file)))
+	return points
+
+def get_many_mavlink_points(mavlink_path):
 	points = set()
 	for file in glob(mavlink_path + "**/*mavlink.log", recursive=True):
 		points = points.union(set(get_mavlink_points(file)))
@@ -415,7 +449,8 @@ def plot_radar_xyz(points, truth=None):
 path_to_search = sys.argv[1]
 full_radar_data = get_many_radar_points(path_to_search)
 full_truth_data = get_many_mavlink_points(path_to_search)\
-				  .union(get_many_adsb_points(path_to_search))
+				  .union(get_many_adsb_points(path_to_search))\
+				  .union(get_many_gpx_points(path_to_search))
 # full_truth_data = get_many_adsb_and_mavlink_points(sys.argv[1])
 
 # plot_radar_points(full_radar_data)
