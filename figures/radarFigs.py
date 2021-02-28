@@ -14,24 +14,29 @@ works cited: https://stackoverflow.com/a/37738851/1586231
 			 https://stackoverflow.com/a/55690467/1586231
 			 https://www.kite.com/python/answers/how-to-find-the-distance-
 			 		 between-two-lat-long-coordinates-in-python
+			 https://medium.com/@lkhphuc/how-to-plot-a-3d-earth-map-using-
+			 		 basemap-and-matplotlib-2bc026483fe4
 usage	  : python3 figures/radarMaps.py ../build/logs/alaska/01.29.21/
 """
+import matplotlib as mpl
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib import gridspec
-import json
-from geopy import distance
-from mpl_toolkits import mplot3d
-import matplotlib.colors
-import os
 import matplotlib.units as munits
 import matplotlib.dates as mdates
-from datetime import datetime, date
-from glob import glob
+import matplotlib.colors
+from mpl_toolkits import mplot3d
+from mpl_toolkits.basemap import Basemap
+from mpl_toolkits.mplot3d import Axes3D
+from geopy import distance
+import pynmea2
+import numpy as np
+import json
+import os
 import sys
 import math
-import pynmea2
 import ntpath
+from datetime import datetime, date
+from glob import glob
 
 converter = mdates.ConciseDateConverter()
 munits.registry[np.datetime64] = converter
@@ -43,6 +48,45 @@ matplotlib.rc('font', size=8)
 
 demo_radar_file = \
 	"../build/logs/alaska/01.26.21/linux/20210126T072518_radar.log"
+
+def draw_3dmap(block_of_radar_points=None):
+	fig = plt.figure()
+	ax = fig.gca(projection='3d')
+	# (time, conf, lat, lon, alt, dist)
+	lats, lons, alts, confs = [], [], [], []
+	for (time, conf, lat, lon, alt, dist) in block_of_radar_points:
+		lats.append(lat)
+		lons.append(lon)
+		alts.append(alt)
+		confs.append(conf)
+	min_lat = min(lats)
+	max_lat = max(lats)
+	min_lon = min(lons)
+	max_lon = max(lons)
+	bm = Basemap(
+		llcrnrlon=min_lon, 
+		llcrnrlat=min_lat,
+        urcrnrlon=max_lon, 
+        urcrnrlat=max_lat,
+        projection='cyl', 
+        resolution='l', 
+        fix_aspect=False, 
+        ax=ax)
+	ax.view_init(azim=230, elev=50)
+	ax.set_xlabel('Longitude (°E)', labelpad=20)
+	ax.set_ylabel('Latitude (°N)', labelpad=20)
+	ax.set_zlabel('Altitude (m)', labelpad=20)
+	lon_step = 30
+	lat_step = 30
+	meridians = np.arange(min_lon, max_lon + lon_step, lon_step)
+	parallels = np.arange(min_lat, max_lat + lat_step, lat_step)
+	ax.set_yticks(parallels)
+	ax.set_yticklabels(parallels)
+	ax.set_xticks(meridians)
+	ax.set_xticklabels(meridians)
+	ax.set_zlim(0., 1000.)
+	p = ax.scatter(lons, lats, alts, c=confs, cmap='jet')
+	plt.show()
 
 def calculateTargetBearing(_azimuth, _radar_orientation):
 	tmp_bearing = None
@@ -387,25 +431,6 @@ def get_many_adsb_points(adsb_path):
 	for file in glob(adsb_path + "**/*adsb.log", recursive=True):
 		points = points.union(set(get_adsb_points(file)))
 	return points
-		
-# def plot_radar_points(points, radar_file_name=None):
-# 	fig = plt.figure()
-# 	title = "RADAR data - "
-# 	if radar_file_name != None:
-# 		title += os.path.basename(radar_file_name).replace(".log", "")
-# 	fig.suptitle(title)
-# 	ax = plt.axes(projection='3d')
-# 	ax.set_ylabel('Δy from RADAR')
-# 	ax.set_xlabel('Δx from RADAR')
-# 	ax.set_zlabel('Δz from RADAR')
-# 	xline = [p[2] for p in points]
-# 	yline = [p[3] for p in points]
-# 	zline = [p[4] for p in points]
-# 	cline = [p[1] for p in points]
-# 	im = ax.scatter3D(xline, yline, zline, c=cline, cmap=cmap, norm=norm)
-# 	cbar = fig.colorbar(im, ax=ax)
-# 	cbar.set_label('Confidence', rotation=270)
-# 	plt.show()
 
 def plot_radar_xyz(points, truth=None):
 	stuff_to_plot = []
@@ -484,7 +509,7 @@ full_truth_data = get_many_mavlink_points(path_to_search)\
 				  .union(get_many_adsb_points(path_to_search))\
 				  .union(get_many_gpx_points(path_to_search))\
 				  .union(get_many_nmea_points(path_to_search))
-# full_truth_data = get_many_adsb_and_mavlink_points(sys.argv[1])
 
-# plot_radar_points(full_radar_data)
-plot_radar_xyz(full_radar_data, full_truth_data)
+# plot_radar_xyz(full_radar_data, full_truth_data)
+
+draw_3dmap([a for k in full_radar_data for a in full_radar_data[k]])
