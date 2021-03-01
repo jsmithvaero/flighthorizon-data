@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import matplotlib.units as munits
 import matplotlib.dates as mdates
-import matplotlib.colors
+import matplotlib.colors as colors
 from mpl_toolkits import mplot3d
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.mplot3d import Axes3D
@@ -43,26 +43,50 @@ munits.registry[np.datetime64] = converter
 munits.registry[date] = converter
 munits.registry[datetime] = converter
 
-matplotlib.rc('font', size=8)
+mpl.rc('font', size=8)
 # matplotlib.rc('axes', titlesize=10)
 
 demo_radar_file = \
 	"../build/logs/alaska/01.26.21/linux/20210126T072518_radar.log"
 
-def draw_3dmap(block_of_radar_points=None):
+def PAC(time, lat, lon, alt, truth):
+	for (time_truth, lat_truth, lon_truth, alt_truth) in truth:
+		if ((time_truth - time).total_seconds() <= 60):
+			continue
+		if (distance_km(lat_truth, lon_truth, lat, lon) / 1000) > 10:
+			continue
+		if (abs(alt - alt_truth) > 10):
+			continue
+		return True
+	return False
+
+def draw_3dmap(block_of_radar_points, mindate, maxdate, radarname):
+	print("draw_3dmap(...", mindate, maxdate, radarname, ")")
 	fig = plt.figure()
+	fig.suptitle(radarname + " " + str(mindate) + " to " + str(maxdate))
 	ax = fig.gca(projection='3d')
 	# (time, conf, lat, lon, alt, dist)
 	lats, lons, alts, confs = [], [], [], []
-	for (time, conf, lat, lon, alt, dist) in block_of_radar_points:
+	goods = 0
+	bads = 0
+	truths = []
+	for (time, conf, lat, lon, alt, dist, truth) in block_of_radar_points:
 		lats.append(lat)
 		lons.append(lon)
 		alts.append(alt)
 		confs.append(conf)
+		truths.append(truth)
+		if truth:
+			goods += 1
+		else:
+			bads += 1
+	print(goods, bads)
 	min_lat = min(lats)
 	max_lat = max(lats)
 	min_lon = min(lons)
 	max_lon = max(lons)
+	if ((min_lat >= max_lat) or (min_lon >= max_lon)):
+		return
 	bm = Basemap(
 		llcrnrlon=min_lon, 
 		llcrnrlat=min_lat,
@@ -71,7 +95,7 @@ def draw_3dmap(block_of_radar_points=None):
         projection='cyl', 
         resolution='l', 
         fix_aspect=False, 
-        ax=ax)
+        ax=ax) 
 	ax.view_init(azim=230, elev=50)
 	ax.set_xlabel('Longitude (°E)', labelpad=20)
 	ax.set_ylabel('Latitude (°N)', labelpad=20)
@@ -85,8 +109,19 @@ def draw_3dmap(block_of_radar_points=None):
 	ax.set_xticks(meridians)
 	ax.set_xticklabels(meridians)
 	ax.set_zlim(0., 1000.)
-	p = ax.scatter(lons, lats, alts, c=confs, cmap='jet')
-	plt.show()
+	p = ax.scatter(lons, \
+		           lats, \
+		           alts, \
+		           c=[1 if t else 0 for t in truths], \
+		           marker=".", \
+		           cmap=colors.ListedColormap(['green', 'red']))
+	# plt.show()
+	name = radarname + ".from." + str(mindate) + ".to." + str(maxdate)
+	plt.savefig(name.replace("[", "_")\
+					     .replace("]", "_")\
+					     .replace(" ", "-")\
+					     .replace("/", ".")\
+					     .replace("\\", ".") + ".png", dpi=200)
 
 def calculateTargetBearing(_azimuth, _radar_orientation):
 	tmp_bearing = None
@@ -249,7 +284,7 @@ def distance_km(lat1, lon1, lat2, lon2):
 
 	return distance
 
-cmap = matplotlib\
+cmap = mpl\
 		.colors\
 		.LinearSegmentedColormap.from_list("", ["red", "violet", "blue"])
 
@@ -503,6 +538,17 @@ def plot_radar_xyz(points, truth=None):
 			block,
 			stuff_to_plot_in_block)
 
+def block_split_time_indexed_data(data):
+	sorted_data = sorted(data, key=lambda d : d[0])
+	blocks = [[sorted_data[0]]]
+	data_length = len(data)
+	for j in range(1, data_length):
+		if ((sorted_data[j][0] - sorted_data[j - 1][0]).total_seconds() / 60) > 10:
+			blocks.append([sorted_data[j]])
+		else:
+			blocks[-1].append(sorted_data[j])
+	return blocks
+
 path_to_search = sys.argv[1]
 full_radar_data = get_many_radar_points(path_to_search)
 full_truth_data = get_many_mavlink_points(path_to_search)\
@@ -512,4 +558,12 @@ full_truth_data = get_many_mavlink_points(path_to_search)\
 
 # plot_radar_xyz(full_radar_data, full_truth_data)
 
-draw_3dmap([a for k in full_radar_data for a in full_radar_data[k]])
+for k in full_radar_data:
+	print("Working on " + str(k))
+	k_blocks = block_split_time_indexed_data(full_radar_data[k])
+	for block in k_blocks:
+		print("\tBlock " + str(block[0][0]) + " to " + str(block[-1][0]))
+		flattened_radar = [(time, conf, lat, lon, alt, dist,\
+		                    PAC(time, lat, lon, alt, full_truth_data)) \
+						   for (time, conf, lat, lon, alt, dist) in block]
+		draw_3dmap(flattened_radar, block[0][0], block[-1][0], k)
