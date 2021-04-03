@@ -18,3 +18,10 @@ To get started:
 ````
 make clean deps figures
 ````
+
+You might also want to have more metadata on *all* of your log files.
+In this case, run:
+
+````
+make tables
+````
