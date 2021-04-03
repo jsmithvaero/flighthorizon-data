@@ -2,15 +2,17 @@
 
 clean: ; - rm *.png
 
-deps: ; pip3 install pynmea2
+deps: ; pip3 install -r requirements.txt
 
+# In order for this to work you'll need to change the
+# argument to point to somewhere where you have logs.
 tables:
 	echo "----------- RADAR -----------"
-	python3 tables/numberTracksRadar.py
+	python3 tables/numberTracksRadar.py "../build/logs/alaska/"
 	echo "----------- MavLink -----------"
-	python3 tables/numberTracksMavlink.py
+	python3 tables/numberTracksMavlink.py "../build/logs/alaska/"
 	echo "----------- ADSB -----------"
-	python3 tables/numberTracksADSB.py
+	python3 tables/numberTracksADSB.py "../build/logs/alaska/"
 
 figures:
-	python3 figures/radarFigs.py ../build/logs/alaska/01.27.21/
+	python3 figures/radarFigs.py demo-data/

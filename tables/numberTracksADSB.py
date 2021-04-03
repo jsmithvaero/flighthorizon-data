@@ -4,9 +4,10 @@ import os
 from tabulate import tabulate
 from datetime import datetime
 import ntpath
+import sys
 
 
-logs = "../build/logs/alaska/"
+logs = sys.argv[1]
 day_to_contents = {}
 
 rows = {}
@@ -52,7 +53,7 @@ for file in glob.glob(logs + "**/*adsb.log", recursive=True):
 
 for day, contents in rows.items():
 	print(day + " - saw icaos: " + ",".join(list(set(icaos[day]))))
-	print(tabulate(sorted(contents), headers=["File", "Protocol", "Number of ICAOs", "First Packer", "Last Packet", "Minutes First to Last", "ICAOs/Minute", "OS"]))
+	print(tabulate(sorted(contents), headers=["File", "Protocol", "Number of ICAOs", "First Packet", "Last Packet", "Minutes First to Last", "ICAOs/Minute", "OS"]))
 # for day, contents in day_to_contents.items():
 # 	print(str(day) + ":")
 # 	for (file, num) in day_to_contents[day]:

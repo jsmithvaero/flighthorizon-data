@@ -4,9 +4,10 @@ import os
 from tabulate import tabulate
 from datetime import datetime
 import ntpath
+import sys
 
 
-logs = "../build/logs/alaska/"
+logs = sys.argv[1]
 day_to_contents = {}
 
 rows = {}
