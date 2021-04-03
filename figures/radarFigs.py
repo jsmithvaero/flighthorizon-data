@@ -38,6 +38,9 @@ import ntpath
 from datetime import datetime, date
 from glob import glob
 import traceback
+from deflate_dict import deflate
+from dictances import *
+from tabulate import tabulate
 
 converter = mdates.ConciseDateConverter()
 munits.registry[np.datetime64] = converter
@@ -52,16 +55,28 @@ demo_radar_file = \
 
 def PAC(time, lat, lon, alt, truth):
 	for (time_truth, lat_truth, lon_truth, alt_truth) in truth:
+		
+		if None == time_truth or \
+		   None == lat_truth  or \
+		   None == lon_truth  or \
+		   None == alt_truth:
+		   print(time_truth, lat_truth, lon_truth, alt_truth)
+		   return False
+
 		if ((time_truth - time).total_seconds() <= 60):
 			continue
-		if (distance_km(lat_truth, lon_truth, lat, lon) / 1000) > 10:
+		if (distance_km(lat_truth, lon_truth, lat, lon) / 1000) < 10:
 			continue
-		if (abs(alt - alt_truth) > 10):
+		if (abs(alt - alt_truth) < 10):
 			continue
 		return True
 	return False
 
-def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate, min_lon, max_lon, min_lat, max_lat):
+def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate):
+	max_lat = max(lats)
+	min_lat = min(lats)
+	max_lon = max(lons)
+	min_lon = min(lons)
 	fig = plt.figure()
 	fig.suptitle(name + " " + str(mindate) + " to " + str(maxdate))
 	ax = fig.gca(projection='3d')
@@ -94,12 +109,14 @@ def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate, min_lon, 
 		       marker=".", \
 		       cmap=_cm)
 	filename = name + ".from." + str(mindate) + ".to." + str(maxdate)
-	plt.savefig(filename.replace("[", "_")\
+	newname = filename.replace("[", "_")\
 					    .replace("]", "_")\
 					    .replace(" ", "-")\
 					    .replace("/", ".")\
-					    .replace("\\", ".") + ".png", dpi=200)
+					    .replace("\\", ".") + ".png"
+	plt.savefig(newname, dpi=200)
 	plt.close()
+	print("\t.... saved to " + newname)
 
 def draw_3dmap(block_of_radar_points, mindate, maxdate, radarname, block_of_truth_data):
 	print("draw_3dmap(...", mindate, maxdate, radarname, ")")
@@ -126,38 +143,91 @@ def draw_3dmap(block_of_radar_points, mindate, maxdate, radarname, block_of_trut
 		else:
 			bads += 1
 	print(goods, bads)
-	min_lat = min(lats)
-	max_lat = max(lats)
-	min_lon = min(lons)
-	max_lon = max(lons)
-	if ((min_lat >= max_lat) or (min_lon >= max_lon)):
-		return
 	
-	draw_map_figure(lons, \
-		            lats, \
-		            alts, \
-		            [1 if t else 0 for t in truths], \
-		            colors.ListedColormap(['green', 'red']), \
-		            radarname, \
-		            mindate,   \
-		            maxdate,   \
-		            min_lon,   \
-		            max_lon,   \
-		            min_lat,   \
-		            max_lat)
-	draw_map_figure(true_lons, \
-					true_lats, \
-					true_alts, \
-					[(t - mindate).total_seconds() for t in true_times], \
-					'jet',   \
-					'truth', \
-					mindate, \
-					maxdate, \
-					min_lon, \
-					max_lon, \
-					min_lat, \
-					max_lat)
+	if len(lats) * len(lons) > 0:
+		min_lat = min(lats)
+		max_lat = max(lats)
+		min_lon = min(lons)
+		max_lon = max(lons)
+		draw_map_figure(lons, \
+			            lats, \
+			            alts, \
+			            [1 if t else 0 for t in truths], \
+			            colors.ListedColormap(['green', 'red']), \
+			            radarname, \
+			            mindate,   \
+			            maxdate)
+	
+	if len(true_lats) * len(true_lons) > 0:
+		draw_map_figure(true_lons, \
+						true_lats, \
+						true_alts, \
+						[(t - mindate).total_seconds() for t in true_times], \
+						'jet',   \
+						'truth', \
+						mindate, \
+						maxdate)
 
+	if len(lats) * len(lons) > 0 and len(true_lats) * len(true_lons) > 0:
+
+		radar_dict = {
+			(time - mindate).total_seconds() : {
+				"lat" : lat,
+				"lon" : lon,
+				"alt" : alt
+			} for (time, _, lat, lon, alt, _, _) in block_of_radar_points
+		}
+
+		truth_dict = {
+			(time - mindate).total_seconds() : {
+				"lat" : lat,
+				"lon" : lon,
+				"alt" : alt
+			} for (time, lat, lon, alt)  in block_of_truth_data
+		}
+
+		print(str(len(radar_dict)) + " radar points.")
+		print(str(len(truth_dict)) + " truth points.")
+
+		deflated_radar = deflate(radar_dict)
+		deflated_truth = deflate(truth_dict)
+
+		bhattacharyya_tr     = bhattacharyya    (deflated_truth, deflated_radar)
+		canberra_tr          = canberra         (deflated_truth, deflated_radar)
+		chebyshev_tr         = chebyshev        (deflated_truth, deflated_radar)
+		chi_square_tr        = chi_square       (deflated_truth, deflated_radar)
+		cosine_tr            = cosine           (deflated_truth, deflated_radar)
+		euclidean_tr         = euclidean        (deflated_truth, deflated_radar)
+		hamming_tr           = hamming          (deflated_truth, deflated_radar)
+		jensen_shannon_tr    = jensen_shannon   (deflated_truth, deflated_radar)
+		kullback_leibler_tr  = kullback_leibler (deflated_truth, deflated_radar) 
+		mae_tr               = mae              (deflated_truth, deflated_radar)
+		manhattan_tr         = manhattan        (deflated_truth, deflated_radar)
+		minkowsky_tr         = minkowsky        (deflated_truth, deflated_radar)
+		mse_tr               = mse              (deflated_truth, deflated_radar)
+		pearson_tr           = pearson          (deflated_truth, deflated_radar)
+		squared_variation_tr = squared_variation(deflated_truth, deflated_radar)
+
+		metrics = [
+			["bhattacharyya"    , bhattacharyya_tr    ],
+			["canberra"         , canberra_tr         ],
+			["chebyshev"        , chebyshev_tr        ],
+			["chi_square"       , chi_square_tr       ],
+			["cosine"           , cosine_tr           ],
+			["euclidean"        , euclidean_tr        ],
+			["hamming"          , hamming_tr          ],
+			["jensen_shannon"   , jensen_shannon_tr   ],
+			["kullback_leibler" , kullback_leibler_tr ],
+			["mae"              , mae_tr              ],
+			["manhattan"        , manhattan_tr        ],
+			["minkowsky"        , minkowsky_tr        ],
+			["mse"              , mse_tr              ],
+			["pearson"          , pearson_tr          ],
+			["squared_variation", squared_variation_tr]
+		]
+
+		print("\tDistance(truth, radar)")
+		print(tabulate(metrics, ["metric", "value"], tablefmt="fancy_grid"))
 
 def calculateTargetBearing(_azimuth, _radar_orientation):
 	tmp_bearing = None
@@ -257,26 +327,14 @@ def get_config_location(radar_file_name):
 # https://stackoverflow.com/a/7835325/1586231
 def calculateTargetPosition(_range, _azimuth, _elevation, receiver):
 	(lat1, lon1, alt1, radar_orientation) = receiver
-	# print("lat1:", lat1, " degrees")
-	# print("lon1:", lon1, " degrees")
-	# print("alt1:", alt1, " meters")
-	# print("radar orientation:", radar_orientation, " degrees")
 	
 	horizontal_distance = _range * math.cos(math.radians(_elevation)) # METERs
 	vertical_distance   = _range * math.sin(math.radians(_elevation)) # METERs
 	bearing			 = calculateTargetBearing(_azimuth, radar_orientation) # DEGREE_ANGLE
 
-	# print("horizontal_distance:", horizontal_distance, " meters")
-	# print("vertical_distance:", vertical_distance, " meters")
-	# print("bearing:", bearing, " degrees")
-
 	R = 6.371009 * (10 ** 6) + alt1
 
-	# print("R:", R, " meters")
-
 	bearing_radians = math.radians(bearing)
-
-	# print("bearing_radians: ", bearing_radians)
 
 	lat1 = math.radians(lat1)
 	lon1 = math.radians(lon1)
@@ -292,10 +350,6 @@ def calculateTargetPosition(_range, _azimuth, _elevation, receiver):
 	lat2 = math.degrees(lat2)
 	lon2 = math.degrees(lon2)
 	alt2 = alt1 + vertical_distance
-
-	# print("lat2:", lat2)
-	# print("lon2:", lon2)
-	# print("alt2:", alt2)
 
 	return (lat2, lon2, alt2)
 
@@ -587,10 +641,14 @@ def block_split_time_indexed_data(data):
 
 path_to_search = sys.argv[1]
 full_radar_data = get_many_radar_points(path_to_search)
-full_truth_data = get_many_mavlink_points(path_to_search)\
-				  .union(get_many_adsb_points(path_to_search))\
-				  .union(get_many_gpx_points(path_to_search))\
-				  .union(get_many_nmea_points(path_to_search))
+full_truth_data = get_many_gpx_points(path_to_search)
+
+
+# full_truth_data = get_many_mavlink_points(path_to_search)\
+# 				  .union(get_many_adsb_points(path_to_search))\
+# 				  .union(get_many_gpx_points(path_to_search))\
+# 				  .union(get_many_nmea_points(path_to_search))
+# full_truth_data = get_many_nmea_points(path_to_search)
 
 # plot_radar_xyz(full_radar_data, full_truth_data)
 

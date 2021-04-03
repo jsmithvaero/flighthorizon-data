@@ -13,4 +13,4 @@ tables:
 	python3 tables/numberTracksADSB.py
 
 figures:
-	python3 figures/radarFigs.py ../build/logs/alaska/
+	python3 figures/radarFigs.py ../build/logs/alaska/01.27.21/
