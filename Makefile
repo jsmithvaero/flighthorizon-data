@@ -2,7 +2,9 @@
 
 clean: ; - rm *.png
 
-deps: ; pip3 install -r requirements.txt
+deps:
+	sudo apt-get install -y libproj-dev
+	pip3 install -r requirements.txt
 
 # In order for this to work you'll need to change the
 # argument to point to somewhere where you have logs.

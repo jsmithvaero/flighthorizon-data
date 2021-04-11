@@ -41,6 +41,9 @@ import traceback
 from deflate_dict import deflate
 from dictances import *
 from tabulate import tabulate
+from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+import cartopy.crs as ccrs
+
 
 converter = mdates.ConciseDateConverter()
 munits.registry[np.datetime64] = converter
@@ -94,7 +97,7 @@ name    - name of the input data source, e.g., "Echoflight"
 mindate - minimum date/time-stamp of the data
 maxdate - maximum date/time-stamp of the data
 """
-def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate):
+def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate, rcvrs=None):
 	max_lat = max(lats)
 	min_lat = min(lats)
 	max_lon = max(lons)
@@ -115,14 +118,29 @@ def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate):
 	ax.set_xlabel('Longitude (°E)', labelpad=20)
 	ax.set_ylabel('Latitude (°N)' , labelpad=20)
 	ax.set_zlabel('Altitude (m)'  , labelpad=20)
-	lon_step = 30
-	lat_step = 30
-	meridians = np.arange(min_lon, max_lon + lon_step, lon_step)
-	parallels = np.arange(min_lat, max_lat + lat_step, lat_step)
+	meridians = sorted(
+					list(
+						set(np.arange(min_lon, 
+							          max_lon, 
+							          (max_lon - min_lon) / 5))\
+	            		.union({ min_lon, max_lon })))
+	parallels = sorted(
+					list(
+						set(np.arange(min_lat, 
+									  max_lat, 
+									  (max_lat - min_lat) / 5))\
+						.union({ min_lat, max_lat })))
 	ax.set_yticks(parallels)
 	ax.set_yticklabels(parallels)
 	ax.set_xticks(meridians)
 	ax.set_xticklabels(meridians)
+	lon_formatter = LongitudeFormatter(zero_direction_label=True)
+	lat_formatter = LatitudeFormatter()
+	ax.xaxis.set_major_formatter(lon_formatter)
+	ax.yaxis.set_major_formatter(lat_formatter)
+	ax.tick_params(axis='x', which='major', pad=10)
+	ax.tick_params(axis='y', which='major', pad=10)
+
 	ax.set_zlim(0., 1000.)
 	ax.scatter(lons,       \
 		       lats,       \
@@ -130,6 +148,12 @@ def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate):
 		       c=_c,       \
 		       marker=".", \
 		       cmap=_cm)
+
+	if rcvrs != None:
+		ax.scatter([r["lat"] for r in rcvrs], 
+			       [r["lon"] for r in rcvrs], 
+			       [r["alt"] for r in rcvrs], marker='^')
+
 	filename = name + ".from." + str(mindate) + ".to." + str(maxdate)
 	newname = filename.replace("[", "_")\
 					    .replace("]", "_")\
@@ -152,7 +176,8 @@ def draw_3dmap(block_of_radar_points, \
 			   mindate,               \
 			   maxdate,               \
 			   radarname,             \
-			   block_of_truth_data):
+			   block_of_truth_data,   \
+			   rcvrs=None):
 	print("draw_3dmap(...", mindate, maxdate, radarname, ")")
 	true_lons, true_lats, true_alts, true_times = [], [], [], []
 	for (t_time, t_lat, t_lon, t_alt) in block_of_truth_data:
@@ -191,7 +216,8 @@ def draw_3dmap(block_of_radar_points, \
 			            colors.ListedColormap(['green', 'red']), \
 			            radarname, \
 			            mindate,   \
-			            maxdate)
+			            maxdate,   \
+			            rcvrs)
 	
 	# TRUTH
 	if len(true_lats) * len(true_lons) > 0:
@@ -202,7 +228,8 @@ def draw_3dmap(block_of_radar_points, \
 						'jet',   \
 						'truth', \
 						mindate, \
-						maxdate)
+						maxdate, \
+						rcvrs)
 
 	if len(lats) * len(lons) > 0 and len(true_lats) * len(true_lons) > 0:
 
@@ -605,13 +632,12 @@ def get_many_mavlink_points(mavlink_path):
 def get_many_radar_points(\
 	radar_path, default="echoguard"):
 	points = {}
+	rcvrs  = {}
 	# print(radar_path)
 	for file in glob(radar_path + "**/*radar.log", recursive=True):
 		subpoints = get_radar_points(file)
 		if subpoints != None:
 			subname = get_config_name(file)
-			if subname == None:
-				subname = default
 			if subname in points:
 				points[subname] += subpoints
 			else:
@@ -731,6 +757,16 @@ def block_split_time_indexed_data(data):
 			blocks[-1].append(sorted_data[j])
 	return blocks
 
+def get_radar_locations(radar_path):
+	rcvrs = []
+	for file in glob(radar_path + "**/*radar.log", recursive=True):
+		conf_rcvr = get_config_location(file)
+		if conf_rcvr != None:
+			lat, lon, alt, ori = conf_rcvr
+			rcvr = { "lat": lat, "lon": lon, "alt": alt }
+			rcvrs.append(rcvr)
+	return rcvrs
+
 """
 This is the part of the code that you edit to make it read the particular kinds
 of files you would like it to read.  Once the code is more mature we can give it
@@ -741,6 +777,9 @@ path_to_search = sys.argv[1]
 full_radar_data = get_many_radar_points(path_to_search)
 full_truth_data = get_many_gpx_points(path_to_search)
 
+# This functionality does not work well yet, makes the maps pretty ugly,
+# apparently because the receiver was so far from the actual flight maneuvers.
+# full_radar_locations = get_radar_locations(path_to_search)
 
 # @Jesse - example below of how to get not just gpx points, but also other
 # truth data. - Max

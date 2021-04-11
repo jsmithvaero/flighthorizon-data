@@ -2,3 +2,4 @@ deflate_dict
 dictances
 tabulate
 pynmea2
+cartopy
