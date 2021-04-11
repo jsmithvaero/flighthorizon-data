@@ -1,6 +1,6 @@
 .PHONY: tables figures
 
-clean: ; - rm *.png
+clean: ; - rm *.png AutomatedReport.*
 
 deps:
 	sudo apt-get install -y libproj-dev
