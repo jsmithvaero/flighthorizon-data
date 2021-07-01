@@ -1,5 +1,9 @@
 # FlightHorizon Analysis
 
+## Warning
+
+> The Makefile is somewhat out-of-date, and I need to update it. - Max
+
 The purpose of this repository is to house data analysis software written and 
 used by Vigilant Aerospace for the express purpose of analyzing flight data.
 
