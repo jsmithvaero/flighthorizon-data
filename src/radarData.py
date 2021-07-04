@@ -21,9 +21,6 @@ class RadarData(Data):
 	points         = None
 	radarLocations = None
 
-	def __init__(self, folder):
-		self.fromFolder(folder)
-
 	# Should fill in the data from the folder
 	def fromFolder(self, folder):
 		self.folder = folder

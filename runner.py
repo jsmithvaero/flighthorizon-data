@@ -7,10 +7,15 @@ usage   : python3 runner.py demo-data
 import sys
 
 from src.radarData import RadarData
-from src.truthData import ADSBData, NMEAData, GPXData, MavlinkData
+from src.truthData import ADSBData,    \
+                          NMEAData,    \
+                          GPXData,     \
+                          MavlinkData, \
+                          TruthData
 from src.blocks    import radarTruthBlocks
 
 def main():
+	# We begin by finding all of the data.
     input_folder = sys.argv[1]
 
     radarD = RadarData  (input_folder)
@@ -29,11 +34,20 @@ def main():
     # Now that we have truth and radar, let's bin it up into blocks.
     BLOCKS = radarTruthBlocks(radarD.getPoints(), truthD.getPoints())
 
-    print(str(len(BLOCKS)) + " total encounters.")
+    BLOCKED_DATAS = [
+    	(RadarData(folder=None,points=radarBlock),
+    	 TruthData(folder=None,points=truthBlock))
+    	for (radarBlock, truthBlock)
+    	in BLOCKS
+    ]
+
+    # Finally, let's answer some questions, over the various blocks.
+    for (RD, TD) in BLOCKED_DATAS:
+
+    	print("TODO")
 
 
-
-
+    print("DONE")
 
 if __name__ == "__main__":
     main()
