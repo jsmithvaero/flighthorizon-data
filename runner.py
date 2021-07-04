@@ -19,10 +19,21 @@ def main():
     mavlD  = MavlinkData(input_folder)
 
     print(radarD.quickStats())
+    print("FORMAT: ", radarD.getFormat())
+
+    print("--------------------------------------")
+
     print(adsbD.quickStats())
-    print(nmeaD.quickStats())
+    print("FORMAT: ", adsbD.getFormat())
+
+    print(nmeaD .quickStats())
+    print("FORMAT: ", nmeaD.getFormat())
+
     print(gpxD.quickStats())
+    print("FORMAT: ", gpxD.getFormat())
+
     print(mavlD.quickStats())
+    print("FORMAT: ", mavlD.getFormat())
 
 
 

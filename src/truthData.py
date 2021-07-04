@@ -30,6 +30,9 @@ class ADSBData(TruthData):
 			points = points.union(set(getADSBpoints(file)))
 		self.points = points
 
+	def quickStats(self):
+		return "ADSB Quick Stats : [ " + str(len(self.points)) + " points ]"
+
 def getADSBpoints(adsb_file_name):
 	points = []
 	with open(adsb_file_name, "r") as fr:
@@ -66,6 +69,9 @@ class NMEAData(TruthData):
 				day   = int(day)
 			points = points.union(getNMEApoints(file, date(year, month, day)))
 		self.points = points
+
+	def quickStats(self):
+		return "NMEA Quick Stats : [ " + str(len(self.points)) + " points ]"
 	
 
 def getNMEApoints(nmea_file_name, date):
@@ -95,6 +101,9 @@ class GPXData(TruthData):
 		for file in glob(folder + "**/*.gpx", recursive=True):
 			points = points.union(set(getGPXpoints(file)))
 		self.points = points
+
+	def quickStats(self):
+		return "GPX Quick Stats : [ " + str(len(self.points)) + " points ]"
 
 def getGPXpoints(gpx_file_name):
 	points = set()
@@ -155,6 +164,9 @@ class MavlinkData(TruthData):
 		for file in glob(folder + "**/*mavlink.log", recursive=True):
 			points = points.union(set(getMavlinkPoints(file)))
 		self.points = points
+
+	def quickStats(self):
+		return "Mavlink Quick Stats : [ " + str(len(self.points)) + " points ]"
 
 def getMavlinkPoints(mavlink_file_name):
 	points = []
