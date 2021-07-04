@@ -13,27 +13,17 @@ def main():
     input_folder = sys.argv[1]
 
     radarD = RadarData  (input_folder)
+    
     adsbD  = ADSBData   (input_folder)
     nmeaD  = NMEAData   (input_folder)
     gpxD   = GPXData    (input_folder)
     mavlD  = MavlinkData(input_folder)
 
-    print(radarD.quickStats())
-    print("FORMAT: ", radarD.getFormat())
+    truthD = adsbD.union(nmeaD)\
+                  .union(gpxD)\
+                  .union(mavlD)
 
-    print("--------------------------------------")
-
-    print(adsbD.quickStats())
-    print("FORMAT: ", adsbD.getFormat())
-
-    print(nmeaD .quickStats())
-    print("FORMAT: ", nmeaD.getFormat())
-
-    print(gpxD.quickStats())
-    print("FORMAT: ", gpxD.getFormat())
-
-    print(mavlD.quickStats())
-    print("FORMAT: ", mavlD.getFormat())
+    print(truthD.quickStats())
 
 
 
