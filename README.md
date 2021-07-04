@@ -1,9 +1,5 @@
 # FlightHorizon Analysis
 
-## Warning
-
-> The Makefile is somewhat out-of-date, and I need to update it. - Max
-
 The purpose of this repository is to house data analysis software written and 
 used by Vigilant Aerospace for the express purpose of analyzing flight data.
 
@@ -29,3 +25,22 @@ In this case, run:
 ````
 make tables
 ````
+
+## Structure
+
+* `figures` contains code to produce some specific, pre-defined figures from `demo-data`
+* `tables` contains code to produce some specific, pre-defined tables from `demo-data`
+* `demo-data` contains some data from Alaska flight tests, with which to develop our code
+* `src` contains our actual organized source-code.
+
+Over time, small ad-hoc things from `figures` and `tables` will be removed from those folders once they have been fully and satisfactorally integrated into `src`.
+
+## Some Works Cited
+
+* https://stackoverflow.com/a/37738851/1586231
+* https://stackoverflow.com/a/43211266/1586231
+* https://stackoverflow.com/q/15908371/1586231
+* https://matplotlib.org/3.1.1/gallery/subplots_axes_and_figures/subplot.html#sphx-glr-gallery-subplots-axes-and-figures-subplot-py
+* https://stackoverflow.com/a/55690467/1586231
+* https://www.kite.com/python/answers/how-to-find-the-distance-between-two-lat-long-coordinates-in-python
+* https://medium.com/@lkhphuc/how-to-plot-a-3d-earth-map-using-basemap-and-matplotlib-2bc026483fe4
