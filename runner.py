@@ -8,6 +8,7 @@ import sys
 
 from src.radarData import RadarData
 from src.truthData import ADSBData, NMEAData, GPXData, MavlinkData
+from src.blocks    import radarTruthBlocks
 
 def main():
     input_folder = sys.argv[1]
@@ -24,6 +25,13 @@ def main():
                   .union(mavlD)
 
     print(truthD.quickStats())
+
+    # Now that we have truth and radar, let's bin it up into blocks.
+    BLOCKS = radarTruthBlocks(radarD.getPoints(), truthD.getPoints())
+
+    print(str(len(BLOCKS)) + " total encounters.")
+
+
 
 
 
