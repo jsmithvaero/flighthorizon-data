@@ -4,15 +4,25 @@ author  : Max von Hippel
 authored: 4 July 2021
 purpose : Data handler for RADAR
 """
-from Data import Data
+import json
+import math
+
+from collections import OrderedDict
+from datetime    import datetime
+
+from src.Data import Data
 from glob import glob
-from mathUtils        import targetBearing, targetPosition, distanceKM
-from genericDataUtils import getConfigName
+from src.mathUtils        import targetBearing, targetPosition, distanceKM
+from src.genericDataUtils import getConfigName
 
 class RadarData(Data):
 
-	self.folder         = None
-	self.radarLocations = None
+	folder         = None
+	points         = None
+	radarLocations = None
+
+	def __init__(self, folder):
+		self.fromFolder(folder)
 
 	# Should fill in the data from the folder
 	def fromFolder(self, folder):
@@ -23,6 +33,8 @@ class RadarData(Data):
 			subpoints = getRadarPoints(file)
 			if subpoints != None:
 				subname = getConfigName(file)
+				if subname == None:
+					subname = file.split("/")[-1].split(".")[0].strip()
 				if subname in points:
 					points[subname] += subpoints
 				else:
@@ -31,16 +43,15 @@ class RadarData(Data):
 
 	# Should return the current format
 	def getFormat(self):
-		return {
-			"name" : [
-				"time"       : "datetime",
-				"confidence" : "percent",
-				"latitude"   : "degree",
-				"longitude"  : "degree",
-				"altitude"   : "meter",
-				"distance"   : "meter"
-			]
-		}
+		ret         = OrderedDict()
+		ret["name"] = OrderedDict()
+		ret["name"]["time"      ] = "datetime"
+		ret["name"]["confidence"] = "percent"
+		ret["name"]["latitude"  ] = "degree"
+		ret["name"]["longitude" ] = "degree"
+		ret["name"]["latitude"  ] = "meter"
+		ret["name"]["distance"  ] = "meter"
+		return ret
 
 	"""
 	Extra Functionality That Extends Data Class
@@ -59,6 +70,16 @@ class RadarData(Data):
 				rcvrs.append(rcvr)
 		self.radarLocations = rcvrs
 		return self.radarLocations
+
+	def quickStats(self):
+		ret = "Radar Quick Stats: ["
+		if self.folder == None:
+			ret += " no folder. ]"
+			return ret
+		for name in self.points:
+			num_points = len(self.points[name])
+			ret += "\n\t" + str(name) + " - " + str(num_points) + " points"
+		return ret + "\n]"
 
 """
 -------------------- RADAR UTILITY FUNCTIONS PROVIDED BELOW --------------------
@@ -86,8 +107,7 @@ def getRadarConfigLocation(radar_file_name):
 			assert("m" == stuff["receiver"]["elevation"]["unit"])
 			assert("°" == stuff["receiver"]["orientation"]["unit"])
 		return lat, lon, alt, ori
-	except:
-		print("TODO - deal with these radar files that lack configs")
+	except Exception as e:
 		return None
 
 
@@ -99,18 +119,15 @@ OUTPUT: the data from radar_file_name, in the format
 def getRadarPoints(radar_file_name):
 	receiver = getRadarConfigLocation(radar_file_name)
 	if receiver == None:
-		print("Not plotting " \
-			+ radar_file_name \
-			+ ", because we lack the RADAR configuration file.")
 		return None
 	points = []
 	with open(radar_file_name, "r") as fr:
 		stuff = json.loads(fr.read())
 		for entry in stuff:
 			(rn, az, el) = (entry["rest"], entry["azest"], entry["elest"])
-			(lat, lon, alt) = calculateTargetPosition(rn, az, el, receiver)
+			(lat, lon, alt) = targetPosition(rn, az, el, receiver)
 			# print("Passing in: ", lat, lon, receiver[0], receiver[1])
-			dist = 1000 * distance_km(lat, lon, receiver[0], receiver[1])
+			dist = 1000 * distanceKM(lat, lon, receiver[0], receiver[1])
 			time = None
 			try:
 				time = datetime.strptime(entry["timeStamp"], \

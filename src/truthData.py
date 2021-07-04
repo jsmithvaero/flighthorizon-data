@@ -1,25 +1,32 @@
-from Data import Data
+from collections import OrderedDict
+from glob        import glob
+from datetime    import datetime
+
+import json
+
+from src.Data import Data
 
 class TruthData(Data):
 
 	# Should return the current format
 	def getFormat(self):
-		return [
-			"time"      : "datetime",
-			"latitude"  : "degree",
-			"longitude" : "degree",
-			"altitude"  : "meter"
-		]
+		ret = OrderedDict()
+		ret["time"     ] = "datetime"
+		ret["latitude" ] = "degree"
+		ret["longitude"] = "degree"
+		ret["altitude" ] = "meter"
+		return ret
+		
 
 """
 ADSB
 """
-class ADSB(TruthData):
+class ADSBData(TruthData):
 
 	# Should fill in the data from the folder
 	def fromFolder(self, folder):
 		points = set()
-		for file in glob(adsb_path + "**/*adsb.log", recursive=True):
+		for file in glob(folder + "**/*adsb.log", recursive=True):
 			points = points.union(set(getADSBpoints(file)))
 		self.points = points
 
@@ -46,12 +53,12 @@ def getADSBpoints(adsb_file_name):
 """
 NMEA
 """
-class NMEA(TruthData):
+class NMEAData(TruthData):
 
 	# Should fill in the data from the folder
 	def fromFolder(self, folder):
 		points = set()
-		for file in glob(nmea_path + "**/*.nmea", recursive=True):
+		for file in glob(folder + "**/*.nmea", recursive=True):
 			if "_" in file:
 				year, month, day, _ = ntpath.basename(file).split("_", 3)
 				year  = int(year)
@@ -80,7 +87,7 @@ def getNMEApoints(nmea_file_name, date):
 """
 GPX
 """
-class GPX(TruthData):
+class GPXData(TruthData):
 
 	# Should fill in the data from the folder
 	def fromFolder(self, folder):
@@ -140,7 +147,7 @@ def getGPXpoints(gpx_file_name):
 MAVLINK
 """
 
-class Mavlink(TruthData):
+class MavlinkData(TruthData):
 
 	# Should fill in the data from the folder
 	def fromFolder(self, folder):

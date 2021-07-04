@@ -4,6 +4,9 @@ author  : Max von Hippel
 authored: 4 July 2021
 purpose : Mathematical utilities used in other scripts.
 """
+import math
+
+from datetime import datetime
 
 """
 The purpose of this function is to check if there is any truth data within
@@ -45,7 +48,7 @@ def targetPosition(_range, _azimuth, _elevation, receiver):
 	
 	horizontal_distance = _range * math.cos(math.radians(_elevation)) # METERs
 	vertical_distance   = _range * math.sin(math.radians(_elevation)) # METERs
-	bearing			 = calculateTargetBearing(_azimuth, radar_orientation) # DEGREE_ANGLE
+	bearing			 = targetBearing(_azimuth, radar_orientation) # DEGREE_ANGLE
 
 	R = 6.371009 * (10 ** 6) + alt1
 
