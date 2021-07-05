@@ -46,7 +46,7 @@ class RadarData(Data):
 		ret["name"]["confidence"] = "percent"
 		ret["name"]["latitude"  ] = "degree"
 		ret["name"]["longitude" ] = "degree"
-		ret["name"]["latitude"  ] = "meter"
+		ret["name"]["altitude"  ] = "meter"
 		ret["name"]["distance"  ] = "meter"
 		return ret
 

@@ -6,15 +6,10 @@ usage   : python3 runner.py demo-data
 """
 import sys
 
-from src.radarData import RadarData
-from src.truthData import ADSBData,    \
-                          NMEAData,    \
-                          GPXData,     \
-                          MavlinkData, \
-                          TruthData
-from src.blocks    import radarTruthBlocks
-
-from src.questions.Question import Question
+from src.radarData          import RadarData
+from src.blocks             import radarTruthBlocks
+from src.truthData          import *
+from src.questions.Question import *
 
 def main():
     if len(sys.argv) < 2:
@@ -47,10 +42,25 @@ def main():
     	in BLOCKS
     ]
 
+    # Remove singletons and empty sets.
+    BLOCKED_DATAS = [
+    	(RD, TD) for (RD, TD) in BLOCKED_DATAS
+        if RD.isNonTrivial() and
+        TD.isNonTrivial()
+    ]
+
     # Finally, let's answer some questions, over the various blocks.
     for (RD, TD) in BLOCKED_DATAS:
 
-    	print("TODO")
+        # 1. How does distance from the RADAR impact ...
+        distances_from_RADAR = distanceFromRadarParser(RD)
+        # (3) reported confidence of the RADAR data?
+        reported_confidences = confidencesOfRadar(RD)
+
+        one_dot_three = Question(timestamped_X=distances_from_RADAR,
+        	                     timestamped_Y=reported_confidences)
+        one_dot_three.plotXY()
+
 
 
     print("DONE")

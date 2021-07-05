@@ -6,6 +6,7 @@ purpose : To answer questions about the data.
 """
 import traces
 import pandas
+import matplotlib.pyplot as plt
 
 class Question:
 
@@ -52,13 +53,23 @@ class Question:
 
 		inRange = lambda s : min_stamp <= s and s <= max_stamp
 
+		print("self.timestamped_X had size " + str(len(self.timestamped_X)))
+
 		self.timestamped_X = [ (s, x) for 
 		                       (s, x) in self.timestamped_X 
 		                              if inRange(s) ]
 
+		print("Now, self.timestamped_X has size " 
+			  + str(len(self.timestamped_X)))
+
+		print("self.timestamped_Y had size " + str(len(self.timestamped_Y)))
+
 		self.timestamped_Y = [ (s, y) for 
 		                       (s, y) in self.timestamped_Y 
 		                              if inRange(s) ]
+
+		print("Now, self.timestamped_Y has size " 
+			  + str(len(self.timestamped_Y)))
 
 	"""
 	Out plotXY() function will take the two timestamped series, and merge them
@@ -72,16 +83,19 @@ class Question:
 		X_ts = traces.TimeSeries()
 		Y_ts = traces.TimeSeries()
 
-		for (stamp, x) in timestamped_X:
+		for (stamp, x) in self.timestamped_X:
 			X_ts[stamp] = x
 
-		for (stamp, y) in timestamped_Y:
+		for (stamp, y) in self.timestamped_Y:
 			Y_ts[stamp] = y
 
-		regular_X = X_ts.moving_average(500, pandas=True)
-		regular_Y = Y_ts.moving_agerage(500, pandas=True)
+		regular_X = X_ts.moving_average(10, pandas=True)
+		regular_Y = Y_ts.moving_average(10, pandas=True)
 
-		pandas.DataFrame.plot.scatter(regular_X, regular_Y)
+		plt.scatter(regular_X, regular_Y)
+		plt.show()
+
+
 
 
 
@@ -90,3 +104,14 @@ class Question:
 -------------------------- Question Variable Parsers ---------------------------
 """
 
+def distanceFromRadarParser(RD):
+	ret = []
+	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+		ret.append((stamp, dist)) 
+	return sorted(ret)
+
+def confidencesOfRadar(RD):
+	ret = []
+	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+		ret.append((stamp, conf)) 
+	return sorted(ret)
