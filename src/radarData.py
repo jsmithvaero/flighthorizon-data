@@ -21,9 +21,6 @@ class RadarData(Data):
 	points         = None
 	radarLocations = None
 
-	def __init__(self, folder):
-		self.fromFolder(folder)
-
 	# Should fill in the data from the folder
 	def fromFolder(self, folder):
 		self.folder = folder
@@ -49,7 +46,7 @@ class RadarData(Data):
 		ret["name"]["confidence"] = "percent"
 		ret["name"]["latitude"  ] = "degree"
 		ret["name"]["longitude" ] = "degree"
-		ret["name"]["latitude"  ] = "meter"
+		ret["name"]["altitude"  ] = "meter"
 		ret["name"]["distance"  ] = "meter"
 		return ret
 

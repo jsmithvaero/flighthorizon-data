@@ -42,3 +42,6 @@ class Data:
 	# Should return some quick stats, for debugging.
 	def quickStats(self):
 		return ""
+
+	def isNonTrivial(self):
+		return len(self.getPoints()) > 1

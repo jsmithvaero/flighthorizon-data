@@ -1,6 +1,6 @@
-from mathUtils import PAC
+from src.mathUtils import PAC
 
-def block_split_time_indexed_data(data):
+def blockSplitTimeIndexedData(data):
 	sorted_data = sorted(data, key=lambda d : d[0])
 	blocks = [[sorted_data[0]]]
 	data_length = len(data)
@@ -14,13 +14,13 @@ def block_split_time_indexed_data(data):
 			blocks[-1].append(sorted_data[j])
 	return blocks
 
-def radar_truth_blocks(radar_data, truth_data):
+def radarTruthBlocks(radar_data, truth_data):
 
 	BLOCKS = []
 
 	for radar_file_name in radar_data:
 
-		radar_file_blocks = block_truth_and_radar_data(radar_data[radar_file_name])
+		radar_file_blocks = blockSplitTimeIndexedData(radar_data[radar_file_name])
 		truth_file_blocks = []
 
 		for radar_block in radar_file_blocks:
@@ -34,12 +34,12 @@ def radar_truth_blocks(radar_data, truth_data):
 				if ((mintime <= time) and (time <= maxtime))
 			]
 
-			BLOCKS.append(radar_block, truth_block)
+			BLOCKS.append((radar_block, truth_block))
 
 	return BLOCKS
 
 
-def flattened_radar_truth_block(radar_truth_block):
+def flattenedRadarTruthBlock(radar_truth_block):
 
 	(radar_block, truth_block) = radar_truth_block
 
@@ -56,6 +56,6 @@ def flattened_radar_truth_block(radar_truth_block):
 	return flattened_block
 
 
-def flattened_radar_truth_blocks(BLOCKS):
+def flattenedRadarTruthBlocks(BLOCKS):
 
-	return [flattened_radar_truth_block(B) for B in BLOCKS]
+	return [flattenedRadarTruthBlock(B) for B in BLOCKS]

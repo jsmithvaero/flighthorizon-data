@@ -16,6 +16,19 @@ class TruthData(Data):
 		ret["longitude"] = "degree"
 		ret["altitude" ] = "meter"
 		return ret
+
+	def quickStats(self):
+		return "Truth Data Quick Stats : [ " \
+		       + str(len(self.points)) + " points ]"
+
+	# EXTRA FUNCTIONALITY ABOVE DATA CLASS
+	def union(self, otherTruth):
+		
+		assert(self.getFormat() == otherTruth.getFormat())
+		
+		new_points = self.points.union(otherTruth.getPoints())
+
+		return TruthData(folder=None, points=new_points)
 		
 
 """
