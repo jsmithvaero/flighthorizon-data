@@ -113,7 +113,7 @@ class Question:
 -------------------------- Question Variable Parsers ---------------------------
 """
 
-def distanceFromRadarParser(RD):
+def distancesFromRadarParser(RD):
 	ret = []
 	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
 		ret.append((stamp, dist)) 
@@ -123,4 +123,10 @@ def confidencesOfRadar(RD):
 	ret = []
 	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
 		ret.append((stamp, conf)) 
+	return sorted(ret)
+
+def altitudesOfRadarTarget(RD):
+	ret = []
+	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+		ret.append((stamp, alt)) 
 	return sorted(ret)

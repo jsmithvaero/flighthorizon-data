@@ -52,8 +52,10 @@ def main():
     # Finally, let's answer some questions, over the various blocks.
     for (RD, TD) in BLOCKED_DATAS:
 
+    	# ----------------------------------------------------------------------
+
         # 1. How does distance from the RADAR impact ...
-        distances_from_RADAR = distanceFromRadarParser(RD)
+        distances_from_RADAR = distancesFromRadarParser(RD)
         # (3) reported confidence of the RADAR data?
         reported_confidences = confidencesOfRadar(RD)
 
@@ -62,6 +64,17 @@ def main():
         	                     X_axis_name="Distance from RADAR (m)",
         	                     Y_axis_name="Reported RADAR confidence (%)")
         one_dot_three.plotXY()
+
+        # ----------------------------------------------------------------------
+
+        # 5. How does altitude of the target above the RADAR impact ...
+        altitudes_of_RADAR = altitudesOfRadarTarget(RD)
+        # (3) reported confidence of the RADAR data?
+        five_dot_three = Question(timestamped_X=altitudes_of_RADAR,
+        	                      timestamped_Y=reported_confidences,
+        	                      X_axis_name="Altitude above RADAR (m)",
+        	                      Y_axis_name="Reported RADAR confidence (%)")
+        five_dot_three.plotXY()
 
 
 
