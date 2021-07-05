@@ -3,3 +3,5 @@ dictances
 tabulate
 pynmea2
 cartopy
+traces
+pandas

@@ -14,8 +14,14 @@ from src.truthData import ADSBData,    \
                           TruthData
 from src.blocks    import radarTruthBlocks
 
+from src.questions.Question import Question
+
 def main():
-	# We begin by finding all of the data.
+    if len(sys.argv) < 2:
+        print("Error - missing required argument for data dir.")
+        return
+
+    # We begin by finding all of the data.
     input_folder = sys.argv[1]
 
     radarD = RadarData  (input_folder)
