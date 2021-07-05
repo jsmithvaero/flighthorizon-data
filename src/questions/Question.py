@@ -8,6 +8,8 @@ import traces
 import pandas
 import matplotlib.pyplot as plt
 
+from src.mathUtils import PAC
+
 class Question:
 
 	timestamped_X = None 
@@ -130,3 +132,19 @@ def altitudesOfRadarTarget(RD):
 	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
 		ret.append((stamp, alt)) 
 	return sorted(ret)
+
+def frequenciesOfValidRadarPoints(RD, TD):
+	pac_points = []
+	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+		if PAC(stamp, lat, lon, alt, TD.getPoints()):
+			pac_points.append((stamp, conf, alt, lat, lon, dist))
+	stamped_second_window_frequencies = []
+	for (stamp, conf, alt, lat, lon, dist) in pac_points:
+		second_window = [
+			s for s in pac_points
+			if abs((stamp - s[0]).total_seconds()) <= 1 
+			and s != (stamp, conf, alt, lat, lon, dist) 
+		]
+		frequency = len(second_window)
+		stamped_second_window_frequencies.append((stamp, frequency))
+	return stamped_second_window_frequencies
