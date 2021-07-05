@@ -52,56 +52,22 @@ def main():
     # Finally, let's answer some questions, over the various blocks.
     for (RD, TD) in BLOCKED_DATAS:
 
-        # ----------------------------------------------------------------------
+        for (independent_parser, independent_name) in INDEPENDENTS:
 
-        # 1. How does distance from the RADAR impact ...
-        distances_from_RADAR = distancesFromRadarParser(RD)
-        # (1) frequency of valid RADAR data-points?
-        frequencies_of_valid_RADAR = frequenciesOfValidRadarPoints(RD, TD)
-        one_dot_one = Question(
-            timestamped_X=distances_from_RADAR,
-            timestamped_Y=frequencies_of_valid_RADAR,
-            X_axis_name="Distance from RADAR (m)",
-            Y_axis_name="Frequency of valid RADAR points (1/s)")
-        one_dot_one.plotXY()
+        	timestamped_INDEPENDENT = independent_parser(RD, TD)
 
-        # ----------------------------------------------------------------------
+        	for (dependent_parser, dependent_name) in DEPENDENTS:
 
-        # 1. How does distance from the RADAR impact ...
-        # (3) reported confidence of the RADAR data?
-        reported_confidences = confidencesOfRadar(RD)
+        		timestamped_DEPENDENT = dependent_parser(RD, TD)
 
-        one_dot_three = Question(
-            timestamped_X=distances_from_RADAR,
-            timestamped_Y=reported_confidences,
-            X_axis_name="Distance from RADAR (m)",
-            Y_axis_name="Reported RADAR confidence (%)")
-        one_dot_three.plotXY()
+        		answer = Question(
+        			timestamped_X=timestamped_INDEPENDENT,
+        			timestamped_Y=timestamped_DEPENDENT,
+        			X_axis_name=independent_name,
+        			Y_axis_name=dependent_name)
 
-        # ----------------------------------------------------------------------
-
-        # 5. How does altitude of the target above the RADAR impact ...
-        altitudes_of_RADAR = altitudesOfRadarTarget(RD)
-        # (1) frequency of valid RADAR data-points?
-        five_dot_three = Question(
-            timestamped_X=altitudes_of_RADAR,
-            timestamped_Y=frequencies_of_valid_RADAR,
-            X_axis_name="Altitude above RADAR (m)",
-            Y_axis_name="Frequency of valid RADAR points (1/s)")
-        five_dot_three.plotXY()
-
-        # ----------------------------------------------------------------------
-
-        # 5. How does altitude of the target above the RADAR impact ...
-        # (3) reported confidence of the RADAR data?
-        five_dot_three = Question(
-            timestamped_X=altitudes_of_RADAR,
-            timestamped_Y=reported_confidences,
-            X_axis_name="Altitude above RADAR (m)",
-            Y_axis_name="Reported RADAR confidence (%)")
-        five_dot_three.plotXY()
-
-
+        		if answer.isNonTrivial():
+	        		answer.plotXY()
 
     print("DONE")
 
