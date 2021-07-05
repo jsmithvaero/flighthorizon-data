@@ -17,7 +17,9 @@ class Question:
 		               timestamped_Y=None, \
 		               X_parser=None,      \
 		               Y_parser=None,      \
-		               BLOCK=None):
+		               BLOCK=None,         \
+		               X_axis_name=None,   \
+		               Y_axis_name=None):
 		
 		if timestamped_X != None:
 			self.timestamped_X = timestamped_X
@@ -38,6 +40,9 @@ class Question:
 			assert(False) # ERROR! Ill-defined question.
 
 		self.removeIsolatedPoints()
+
+		self.X_axis_name = X_axis_name
+		self.Y_axis_name = Y_axis_name
 
 	def removeIsolatedPoints(self):
 
@@ -92,12 +97,16 @@ class Question:
 		regular_X = X_ts.moving_average(10, pandas=True)
 		regular_Y = Y_ts.moving_average(10, pandas=True)
 
+		xAx = "Unknown X" if self.X_axis_name == None else self.X_axis_name
+		yAx = "Unknown Y" if self.Y_axis_name == None else self.Y_axis_name
+
+		title = xAx + " versus " + yAx
+
+		plt.title  (title               )
+		plt.xlabel (xAx                 )
+		plt.ylabel (yAx                 )
 		plt.scatter(regular_X, regular_Y)
-		plt.show()
-
-
-
-
+		plt.show   (                    )
 
 
 """

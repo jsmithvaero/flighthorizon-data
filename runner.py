@@ -58,7 +58,9 @@ def main():
         reported_confidences = confidencesOfRadar(RD)
 
         one_dot_three = Question(timestamped_X=distances_from_RADAR,
-        	                     timestamped_Y=reported_confidences)
+        	                     timestamped_Y=reported_confidences,
+        	                     X_axis_name="Distance from RADAR (m)",
+        	                     Y_axis_name="Reported RADAR confidence (%)")
         one_dot_three.plotXY()
 
 
