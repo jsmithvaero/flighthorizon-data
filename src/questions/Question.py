@@ -7,6 +7,7 @@ purpose : To answer questions about the data.
 import traces
 import pandas
 import matplotlib.pyplot as plt
+import os
 
 from src.mathUtils import PAC
 
@@ -48,35 +49,43 @@ class Question:
 
 	def removeIsolatedPoints(self):
 
-		min_stamp = max({
-			min([ s for (s, _) in self.timestamped_X ]),
-			min([ s for (s, _) in self.timestamped_Y ])
-		})
+		try:
 
-		max_stamp = min({
-			max([ s for (s, _) in self.timestamped_X ]),
-			max([ s for (s, _) in self.timestamped_Y ])
-		})
+			min_stamp = max({
+				min([ s for (s, _) in self.timestamped_X ]),
+				min([ s for (s, _) in self.timestamped_Y ])
+			})
 
-		inRange = lambda s : min_stamp <= s and s <= max_stamp
+			max_stamp = min({
+				max([ s for (s, _) in self.timestamped_X ]),
+				max([ s for (s, _) in self.timestamped_Y ])
+			})
 
-		print("self.timestamped_X had size " + str(len(self.timestamped_X)))
+			inRange = lambda s : min_stamp <= s and s <= max_stamp
 
-		self.timestamped_X = [ (s, x) for 
-		                       (s, x) in self.timestamped_X 
-		                              if inRange(s) ]
+			print("self.timestamped_X had size " + str(len(self.timestamped_X)))
 
-		print("Now, self.timestamped_X has size " 
-			  + str(len(self.timestamped_X)))
+			self.timestamped_X = [ (s, x) for 
+			                       (s, x) in self.timestamped_X 
+			                              if inRange(s) ]
 
-		print("self.timestamped_Y had size " + str(len(self.timestamped_Y)))
+			print("Now, self.timestamped_X has size " 
+				  + str(len(self.timestamped_X)))
 
-		self.timestamped_Y = [ (s, y) for 
-		                       (s, y) in self.timestamped_Y 
-		                              if inRange(s) ]
+			print("self.timestamped_Y had size " + str(len(self.timestamped_Y)))
 
-		print("Now, self.timestamped_Y has size " 
-			  + str(len(self.timestamped_Y)))
+			self.timestamped_Y = [ (s, y) for 
+			                       (s, y) in self.timestamped_Y 
+			                              if inRange(s) ]
+
+			print("Now, self.timestamped_Y has size " 
+				  + str(len(self.timestamped_Y)))
+
+		except Exception as e:
+
+			print("self.timestamped_X = ", self.timestamped_X)
+			print("self.timestamped_Y = ", self.timestamped_Y)
+			print("exception = ", e)
 
 	def isNonTrivial(self):
 		return self.timestamped_X != None  and \
@@ -91,7 +100,7 @@ class Question:
 	There will be three kinds of points: X_interplated, Y_interplated, and
 	XY_original.
 	"""
-	def plotXY(self, regularizationSize=10):
+	def plotXY(self, regularizationSize=10, save=False):
 
 		print("\nCalling plotXY(regularizationSize=" 
 			  + str(regularizationSize)
@@ -123,13 +132,25 @@ class Question:
 				    set([s for (s, _) in self.timestamped_Y])
 		)
 
-		title += str(min(allStamps)) + " to " + str(max(allStamps))
+		datestr = str(min(allStamps)) + " to " + str(max(allStamps))
+		title += datestr
 
-		plt.title  (title               )
+		plt.title  (title + datestr     )
 		plt.xlabel (xAx                 )
 		plt.ylabel (yAx                 )
 		plt.scatter(regular_X, regular_Y)
-		plt.show   (                    )
+		if save == True:
+			datedir = datestr.replace("/", ".").replace(" ", "_").replace(":", ".")
+			if not os.path.isdir(datedir):
+				os.mkdir(datedir)
+			plt.savefig(datedir + "/" + title.replace(" " , "_")\
+				                             .replace(":" , ".")\
+				                             .replace("/" , ".")\
+				                             .replace("\n", ".")\
+				                             .replace("(" , "" )\
+				                             .replace(")" , "" ) + ".png")
+		else:
+			plt.show()
 
 
 """
@@ -138,19 +159,19 @@ class Question:
 
 def distancesFromRadarParser(RD, TD=None):
 	ret = []
-	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
 		ret.append((stamp, dist)) 
 	return sorted(ret)
 
 def confidencesOfRadar(RD, TD=None):
 	ret = []
-	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
 		ret.append((stamp, conf)) 
 	return sorted(ret)
 
 def altitudesOfRadarTarget(RD, TD=None):
 	ret = []
-	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
 		ret.append((stamp, alt)) 
 	return sorted(ret)
 
@@ -168,21 +189,53 @@ def _stampedSecondWindowFrequencies(some_points):
 
 def frequenciesOfValidRadarPoints(RD, TD):
 	pac_points = []
-	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
 		if PAC(stamp, lat, lon, alt, TD.getPoints()):
 			pac_points.append((stamp, conf, alt, lat, lon, dist))
 	return _stampedSecondWindowFrequencies(pac_points)
 
 def frequenciesOfInValidRadarPoints(RD, TD):
 	not_pac_points = []
-	for (stamp, conf, alt, lat, lon, dist) in RD.getPoints():
+	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
 		if not PAC(stamp, lat, lon, alt, TD.getPoints()):
 			not_pac_points.append((stamp, conf, alt, lat, lon, dist))
 	return _stampedSecondWindowFrequencies(not_pac_points)
 
+def verticalVelocities(RD, TD=None):
+	return [
+		(stamp, zV) 
+	    for (stamp, conf, alt, lat, lon, dist, zV, xV, yV) 
+	    in RD.getPoints()
+	]
+
+def horizontalSpeeds(RD, TD=None):
+	return [
+		(stamp, (xV ** 2 + yV ** 2) ** 0.5) 
+	    for (stamp, conf, alt, lat, lon, dist, zV, xV, yV) 
+	    in RD.getPoints()
+	]
+
+def xVelocities(RD, TD=None):
+	return [
+		(stamp, xV) 
+	    for (stamp, conf, alt, lat, lon, dist, zV, xV, yV) 
+	    in RD.getPoints()
+	]
+
+def yVelocities(RD, TD=None):
+	return [
+		(stamp, yV) 
+	    for (stamp, conf, alt, lat, lon, dist, zV, xV, yV) 
+	    in RD.getPoints()
+	]
+
 INDEPENDENTS = [
 	(distancesFromRadarParser, "Distance from RADAR (m)"),
-	(altitudesOfRadarTarget  , "Altitude above RADAR (m)")
+	(altitudesOfRadarTarget  , "Altitude above RADAR (m)"),
+	(verticalVelocities      , "Vertical Velocity (m/s)"),
+	(horizontalSpeeds        , "Horizontal Speed (m/s)"),
+	(xVelocities             , "X-dimensional Horizontal Velocity (m/s)"),
+	(yVelocities             , "Y-dimensional Horizontal Velocity (m/s)")
 ]
 
 DEPENDENTS = [

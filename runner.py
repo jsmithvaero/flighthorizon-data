@@ -69,7 +69,7 @@ def main():
         			Y_axis_name=dependent_name)
 
         		if answer.isNonTrivial():
-	        		answer.plotXY()
+	        		answer.plotXY(save=True)
 
     print("DONE")
 
