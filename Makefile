@@ -89,4 +89,20 @@ testUnclear:
 
 # ------------------- FLIGHT TEST 4 (UAF-FAA-VAS 2021) -------------------
 
-# TODO
+test4day1:
+	python3 runner.py $(UAFVASFAA)$(TEST4)2021.06.07.Monday/
+
+test4day2:
+	python3 runner.py $(UAFVASFAA)$(TEST4)2021.06.08.Tuesday/
+
+test4day3:
+	python3 runner.py $(UAFVASFAA)$(TEST4)2021.06.09.Wednesday/
+
+test4day4:
+	python3 runner.py $(UAFVASFAA)$(TEST4)2021.06.10.Thursday/
+
+test4day5:
+	python3 runner.py $(UAFVASFAA)$(TEST4)2021.06.11.Friday/
+
+test4:
+	make test4day1 test4day2 test4day3 test4day4 test4day5
