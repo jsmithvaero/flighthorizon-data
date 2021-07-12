@@ -42,12 +42,15 @@ class RadarData(Data):
 	def getFormat(self):
 		ret         = OrderedDict()
 		ret["name"] = OrderedDict()
-		ret["name"]["time"      ] = "datetime"
-		ret["name"]["confidence"] = "percent"
-		ret["name"]["latitude"  ] = "degree"
-		ret["name"]["longitude" ] = "degree"
-		ret["name"]["altitude"  ] = "meter"
-		ret["name"]["distance"  ] = "meter"
+		ret["name"]["time"            ] = "datetime"
+		ret["name"]["confidence"      ] = "percent"
+		ret["name"]["latitude"        ] = "degree"
+		ret["name"]["longitude"       ] = "degree"
+		ret["name"]["altitude"        ] = "meter"
+		ret["name"]["distance"        ] = "meter"
+		ret["name"]["verticalVelocity"] = "meter/second"
+		ret["name"]["xVelocity"       ] = "meter/second"
+		ret["name"]["yVelocity"       ] = "meter/second" 
 		return ret
 
 	"""
@@ -122,6 +125,11 @@ def getRadarPoints(radar_file_name):
 		stuff = json.loads(fr.read())
 		for entry in stuff:
 			(rn, az, el) = (entry["rest"], entry["azest"], entry["elest"])
+			
+			(velVert, velX, velY) = (entry["velzest"], 
+				                     entry["velxest"], 
+				                     entry["velyest"])
+
 			(lat, lon, alt) = targetPosition(rn, az, el, receiver)
 			# print("Passing in: ", lat, lon, receiver[0], receiver[1])
 			dist = 1000 * distanceKM(lat, lon, receiver[0], receiver[1])
@@ -133,5 +141,13 @@ def getRadarPoints(radar_file_name):
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%SZ")
 			conf = entry["confidenceLevel"]
-			points.append((time, conf, lat, lon, alt, dist))
+			points.append((time, 
+				           conf, 
+				           lat, 
+				           lon, 
+				           alt, 
+				           dist, 
+				           velVert, 
+				           velX, 
+				           velY))
 	return points

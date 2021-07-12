@@ -11,6 +11,8 @@ from src.blocks             import radarTruthBlocks
 from src.truthData          import *
 from src.questions.Question import *
 
+TRIVIAL_THRESHOLD = 4
+
 def main():
     if len(sys.argv) < 2:
         print("Error - missing required argument for data dir.")
@@ -45,8 +47,8 @@ def main():
     # Remove singletons and empty sets.
     BLOCKED_DATAS = [
         (RD, TD) for (RD, TD) in BLOCKED_DATAS
-        if RD.isNonTrivial() and
-        TD.isNonTrivial()
+        if RD.isNonTrivial(TRIVIAL_THRESHOLD) and
+        TD.isNonTrivial(TRIVIAL_THRESHOLD)
     ]
 
     # Finally, let's answer some questions, over the various blocks.
@@ -67,7 +69,7 @@ def main():
         			Y_axis_name=dependent_name)
 
         		if answer.isNonTrivial():
-	        		answer.plotXY()
+	        		answer.plotXY(save=True)
 
     print("DONE")
 

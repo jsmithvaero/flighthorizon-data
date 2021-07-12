@@ -43,5 +43,5 @@ class Data:
 	def quickStats(self):
 		return ""
 
-	def isNonTrivial(self):
-		return len(self.getPoints()) > 1
+	def isNonTrivial(self, TRIVIAL_THRESHOLD=2):
+		return len(self.getPoints()) > TRIVIAL_THRESHOLD
