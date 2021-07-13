@@ -102,10 +102,11 @@ def getRadarConfigLocation(radar_file_name):
 			lat = stuff["receiver"]["latitude"]["value"]
 			alt = stuff["receiver"]["elevation"]["value"]
 			ori = stuff["receiver"]["orientation"]["value"]
-			assert("°" == stuff["receiver"]["longitude"]["unit"])
-			assert("°" == stuff["receiver"]["latitude"]["unit"])
-			assert("m" == stuff["receiver"]["elevation"]["unit"])
-			assert("°" == stuff["receiver"]["orientation"]["unit"])
+			# == changed to in because running environment was adding a random special character
+			assert("°" in stuff["receiver"]["longitude"]["unit"])
+			assert("°" in stuff["receiver"]["latitude"]["unit"])
+			assert("m" in stuff["receiver"]["elevation"]["unit"])
+			assert("°" in stuff["receiver"]["orientation"]["unit"])
 		return lat, lon, alt, ori
 	except Exception as e:
 		return None
