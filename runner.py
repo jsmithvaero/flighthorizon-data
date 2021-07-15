@@ -6,6 +6,7 @@ usage   : python3 runner.py demo-data
 """
 import sys
 import argumentKeys as argKeys
+import argparse
 
 from src.radarData          import RadarData
 from src.blocks             import radarTruthBlocks
@@ -18,25 +19,31 @@ INDEPENDENTS_to_run = range(0, len(INDEPENDENTS)-1, 1)
 DEPENDENTS_to_run = range(0, len(DEPENDENTS)-1, 1)
 
 def main():
-    args = sys.argv
 
-    if len(sys.argv) < 2:
-        print("Error - missing required argument for data dir.")
-        return
+    CLI=argparse.ArgumentParser()
+    CLI.add_argument(
+        argKeys.folder,
+        nargs=1,
+        type=str,
+        default='demo-data/'
+    )
+    CLI.add_argument(
+        argKeys.run_independents_key,
+        nargs="*",
+        type=int,
+        default=INDEPENDENTS_to_run
+    )
+    CLI.add_argument(
+        argKeys.run_dependents_key,
+        nargs="*",
+        type=int,
+        default=DEPENDENTS_to_run
+    )
 
-    # Allows for the running of specific sets of dependent and independent variables
-    if argKeys.run_dependents_key in sys.argv:
-        d_pos = sys.argv.index(argKeys.run_dependents_key)
-        input = sys.argv[d_pos+1]
-        DEPENDENTS_to_run = map(int, input.strip('[]').split(','))
-
-    if argKeys.run_independents_key in sys.argv:
-        d_pos = sys.argv.index(argKeys.run_independents_key)
-        input = sys.argv[d_pos+1]
-        INDEPENDENTS_to_run = map(int, input.strip('[]').split(','))
+    args = CLI.parse_args()
 
     # We begin by finding all of the data.
-    input_folder = sys.argv[1]
+    input_folder = args.folder[0]
 
     radarD = RadarData  (input_folder)
     
