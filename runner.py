@@ -78,22 +78,23 @@ def main():
     # Finally, let's answer some questions, over the various blocks.
     for (RD, TD) in BLOCKED_DATAS:
 
-        for (independent_parser, independent_name) in INDEPENDENTS:
+        for countI, (independent_parser, independent_name) in enumerate(INDEPENDENTS):
 
-        	timestamped_INDEPENDENT = independent_parser(RD, TD)
+            timestamped_INDEPENDENT = independent_parser(RD, TD)
 
-        	for (dependent_parser, dependent_name) in DEPENDENTS:
+            for countD, (dependent_parser, dependent_name) in enumerate(DEPENDENTS):
 
-        		timestamped_DEPENDENT = dependent_parser(RD, TD)
+                timestamped_DEPENDENT = dependent_parser(RD, TD)
 
-        		answer = Question(
-        			timestamped_X=timestamped_INDEPENDENT,
-        			timestamped_Y=timestamped_DEPENDENT,
-        			X_axis_name=independent_name,
-        			Y_axis_name=dependent_name)
+                if countI in args.independents and countD in args.dependents:
+                    answer = Question(
+                        timestamped_X=timestamped_INDEPENDENT,
+                        timestamped_Y=timestamped_DEPENDENT,
+                        X_axis_name=independent_name,
+                        Y_axis_name=dependent_name)
 
-        		if answer.isNonTrivial():
-	        		answer.plotXY(save=True)
+                    if answer.isNonTrivial():
+                        answer.plotXY(save=True)
 
     print("DONE")
 
