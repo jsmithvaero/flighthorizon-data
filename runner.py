@@ -5,6 +5,7 @@ authored: 4 July 2021
 usage   : python3 runner.py demo-data
 """
 import sys
+import argumentKeys as argKeys
 
 from src.radarData          import RadarData
 from src.blocks             import radarTruthBlocks
@@ -13,10 +14,26 @@ from src.questions.Question import *
 
 TRIVIAL_THRESHOLD = 4
 
+INDEPENDENTS_to_run = range(0, len(INDEPENDENTS)-1, 1)
+DEPENDENTS_to_run = range(0, len(DEPENDENTS)-1, 1)
+
 def main():
+    args = sys.argv
+
     if len(sys.argv) < 2:
         print("Error - missing required argument for data dir.")
         return
+
+    # Allows for the running of specific sets of dependent and independent variables
+    if argKeys.run_dependents_key in sys.argv:
+        d_pos = sys.argv.index(argKeys.run_dependents_key)
+        input = sys.argv[d_pos+1]
+        DEPENDENTS_to_run = map(int, input.strip('[]').split(','))
+
+    if argKeys.run_independents_key in sys.argv:
+        d_pos = sys.argv.index(argKeys.run_independents_key)
+        input = sys.argv[d_pos+1]
+        INDEPENDENTS_to_run = map(int, input.strip('[]').split(','))
 
     # We begin by finding all of the data.
     input_folder = sys.argv[1]
