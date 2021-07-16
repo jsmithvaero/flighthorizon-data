@@ -6,7 +6,6 @@ usage   : python3 runner.py demo-data
 """
 import sys
 import argumentKeys as argKeys
-import argparse
 
 from src.radarData          import RadarData
 from src.blocks             import radarTruthBlocks
@@ -15,32 +14,9 @@ from src.questions.Question import *
 
 TRIVIAL_THRESHOLD = 4
 
-INDEPENDENTS_to_run = range(0, len(INDEPENDENTS)-1, 1)
-DEPENDENTS_to_run = range(0, len(DEPENDENTS)-1, 1)
-
 def main():
 
-    CLI=argparse.ArgumentParser()
-    CLI.add_argument(
-        argKeys.folder,
-        nargs=1,
-        type=str,
-        default='demo-data/'
-    )
-    CLI.add_argument(
-        argKeys.run_independents_key,
-        nargs="*",
-        type=int,
-        default=INDEPENDENTS_to_run
-    )
-    CLI.add_argument(
-        argKeys.run_dependents_key,
-        nargs="*",
-        type=int,
-        default=DEPENDENTS_to_run
-    )
-
-    args = CLI.parse_args()
+    args = argKeys.parse()
 
     # We begin by finding all of the data.
     input_folder = args.folder[0]
@@ -79,14 +55,11 @@ def main():
     for (RD, TD) in BLOCKED_DATAS:
 
         for countI, (independent_parser, independent_name) in enumerate(INDEPENDENTS):
-
-            timestamped_INDEPENDENT = independent_parser(RD, TD)
-
             for countD, (dependent_parser, dependent_name) in enumerate(DEPENDENTS):
-
-                timestamped_DEPENDENT = dependent_parser(RD, TD)
-
                 if countI in args.independents and countD in args.dependents:
+
+                    timestamped_INDEPENDENT = independent_parser(RD, TD)
+                    timestamped_DEPENDENT = dependent_parser(RD, TD)
                     answer = Question(
                         timestamped_X=timestamped_INDEPENDENT,
                         timestamped_Y=timestamped_DEPENDENT,
