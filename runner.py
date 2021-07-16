@@ -5,6 +5,7 @@ authored: 4 July 2021
 usage   : python3 runner.py demo-data
 """
 import sys
+import argumentKeys as argKeys
 
 from src.radarData          import RadarData
 from src.blocks             import radarTruthBlocks
@@ -14,12 +15,11 @@ from src.questions.Question import *
 TRIVIAL_THRESHOLD = 4
 
 def main():
-    if len(sys.argv) < 2:
-        print("Error - missing required argument for data dir.")
-        return
+
+    args = argKeys.parse()
 
     # We begin by finding all of the data.
-    input_folder = sys.argv[1]
+    input_folder = args.folder[0]
 
     radarD = RadarData  (input_folder)
     
@@ -54,22 +54,20 @@ def main():
     # Finally, let's answer some questions, over the various blocks.
     for (RD, TD) in BLOCKED_DATAS:
 
-        for (independent_parser, independent_name) in INDEPENDENTS:
+        for countI, (independent_parser, independent_name) in enumerate(INDEPENDENTS):
+            for countD, (dependent_parser, dependent_name) in enumerate(DEPENDENTS):
+                if countI in args.independents and countD in args.dependents:
 
-        	timestamped_INDEPENDENT = independent_parser(RD, TD)
+                    timestamped_INDEPENDENT = independent_parser(RD, TD)
+                    timestamped_DEPENDENT = dependent_parser(RD, TD)
+                    answer = Question(
+                        timestamped_X=timestamped_INDEPENDENT,
+                        timestamped_Y=timestamped_DEPENDENT,
+                        X_axis_name=independent_name,
+                        Y_axis_name=dependent_name)
 
-        	for (dependent_parser, dependent_name) in DEPENDENTS:
-
-        		timestamped_DEPENDENT = dependent_parser(RD, TD)
-
-        		answer = Question(
-        			timestamped_X=timestamped_INDEPENDENT,
-        			timestamped_Y=timestamped_DEPENDENT,
-        			X_axis_name=independent_name,
-        			Y_axis_name=dependent_name)
-
-        		if answer.isNonTrivial():
-	        		answer.plotXY(save=True)
+                    if answer.isNonTrivial():
+                        answer.plotXY(save=True)
 
     print("DONE")
 

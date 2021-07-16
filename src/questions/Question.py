@@ -135,6 +135,10 @@ class Question:
 		datestr = str(min(allStamps)) + " to " + str(max(allStamps))
 		title += datestr
 
+		# For more complex plots we should be using fig = plt.figure(), but just adding plt.clf() is a simple solution
+		#fig = plt.figure()
+		#ax = fig.add_subplot(1,1,1)
+
 		plt.title  (title + datestr     )
 		plt.xlabel (xAx                 )
 		plt.ylabel (yAx                 )
@@ -149,6 +153,7 @@ class Question:
 				                             .replace("\n", ".")\
 				                             .replace("(" , "" )\
 				                             .replace(")" , "" ) + ".png")
+			plt.clf()
 		else:
 			plt.show()
 
