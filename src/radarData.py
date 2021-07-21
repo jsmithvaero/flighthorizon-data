@@ -50,7 +50,11 @@ class RadarData(Data):
 		ret["name"]["distance"        ] = "meter"
 		ret["name"]["verticalVelocity"] = "meter/second"
 		ret["name"]["xVelocity"       ] = "meter/second"
-		ret["name"]["yVelocity"       ] = "meter/second" 
+		ret["name"]["yVelocity"       ] = "meter/second"
+		ret["name"]["azimuth"] = "degree"
+		ret["name"]["elevation"] = "degree"
+		ret["name"]["range"] = "meter"
+		ret["name"]["source"] = "filename"
 		return ret
 
 	"""
@@ -142,7 +146,7 @@ def getRadarPoints(radar_file_name):
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%SZ")
 			conf = entry["confidenceLevel"]
-			points.append((time, 
+			points.append((time,
 				           conf, 
 				           lat, 
 				           lon, 
@@ -150,5 +154,44 @@ def getRadarPoints(radar_file_name):
 				           dist, 
 				           velVert, 
 				           velX, 
-				           velY))
+				           velY,
+						   az,
+						   el,
+						   rn,
+						   radar_file_name))
 	return points
+
+
+# This function will be here for future implementations when a radar logfile can contain the orientation information
+# For now it will just return a generic radar fov for Echodyne GroundAware radars.
+def get_radar_fov_and_location(radar_log_file):
+
+	fov = None
+	fov.range = 5000
+	fov.range.unit = "meter"
+	fov.AzMin = 60
+	fov.AzMin.unit = "degree"
+
+	# Fill out the rest here
+
+
+	return fov
+
+
+def is_point_in_fov(range):
+	# (datetime.datetime(2021, 1, 27, 20, 3, 20, 88000), 0.0, 65.12624067, -147.47648183, 211.8, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'demo-data/2021.january.27\\20210127T080320_radar.log')
+
+	# Using the radar's location as 0,0,0 in enu coordinates translate the plane's lat, lon, alt into enu
+	# (v1 = plane_position-radar_position)
+	# Make a quaternion describing the rotation of the radar
+	# Create a vector that is just [fov.range, 0,0] and then rotate its reference frame by the radar orientation quaternion
+	# This creates v2 (the center fov vector of the radar)
+	#
+	# Maybe rotate vector v1 by the frame of the radar's rotation
+	#
+	# Setup some optional test plots to check and make sure the vectors are working correctly
+	# Find the angle between v1 and v2 vectors
+	# Normalize the vectors
+	# Compare the angle between them and check if they are out of range
+
+	return
