@@ -22,6 +22,7 @@ from dictances import *
 from tabulate import tabulate
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import cartopy.crs as ccrs
+from scipy.spatial.transform import Rotation
 
 converter = mdates.ConciseDateConverter()
 munits.registry[np.datetime64] = converter
@@ -351,9 +352,9 @@ vector = np.array([[x, y, z, u, v, w], ...])
 ax = an axis object made normally by:
 ax = fig.add_subplot(111, projection='3d')
 """
-def plot_vectors(vector, ax):
+def plot_vectors(vector, ax, color='b'):
 	x, y, z, u, v, w = zip(*vector)
-	ax.quiver(x, y, z, u, v, w)
+	ax.quiver(x, y, z, u, v, w, color=color)
 	max_len = max(np.abs(vector.flatten()))
 	ax.set_xlim([-max_len, max_len])
 	ax.set_ylim([-max_len, max_len])
@@ -366,5 +367,36 @@ def plot_vector_setup():
 	ax.set_zlabel('u')
 	return ax
 
-def plot_radar_fov_indicators(vector, fov, ax):
-	x, y, z, u, v, w = zip(*vector)
+
+
+
+def plot_radar_fov_indicators(radar_position, fov, physical, ax):
+	# Make base vector for radar
+	radar_orientation = Rotation.from_euler('ZYX', [-physical.heading, physical.roll, physical.pitch], degrees=True)
+	radar_range_base_vector = np.array([0, fov.range, 0])
+	radar_FoV_center_vector = radar_orientation.apply(radar_range_base_vector)
+	# Make vectors for BR, TR, BL, TL
+	BR_rot = Rotation.from_euler('ZYX', [-physical.heading-fov.AzMax, physical.roll, physical.pitch+fov.ElMin], degrees=True)
+	BR = BR_rot.apply(radar_range_base_vector)
+	TR_rot = Rotation.from_euler('ZYX', [-physical.heading-fov.AzMax, physical.roll, physical.pitch+fov.ElMax], degrees=True)
+	TR = TR_rot.apply(radar_range_base_vector)
+
+	BL_rot = Rotation.from_euler('ZYX', [-physical.heading - fov.AzMin, physical.roll, physical.pitch + fov.ElMin],
+								 degrees=True)
+	BL = BL_rot.apply(radar_range_base_vector)
+	TL_rot = Rotation.from_euler('ZYX', [-physical.heading - fov.AzMin, physical.roll, physical.pitch + fov.ElMax],
+								 degrees=True)
+	TL = TL_rot.apply(radar_range_base_vector)
+
+	# breakout and compose into vectors
+	uBR, vBR, wBR = BR
+	uTR, vTR, wTR = TR
+	uBL, vBL, wBL = BL
+	uTL, vTL, wTL = TL
+
+	x, y, z = radar_position
+
+	vectors = np.array([[x,y,z, uBR, vBR, wBR], [x,y,z, uTR, vTR, wTR], [x,y,z, uBL, vBL, wBL], [x,y,z, uTL, vTL, wTL]])
+
+	# plot the vectors
+	plot_vectors(vectors, ax, color='r')

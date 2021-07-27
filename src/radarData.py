@@ -269,7 +269,7 @@ def is_point_in_fov(range, testTruth, useRadarAsCenter=True, centerLat=0, center
 	# y roll
 	# x pitch
 
-	radar_orientation = Rotation.from_euler('zyx',[-physical.heading, physical.roll, physical.pitch], degrees=True)
+	radar_orientation = Rotation.from_euler('ZYX',[-physical.heading, physical.roll, physical.pitch], degrees=True)
 
 	# Create a vector that is just [fov.range, 0,0] and then rotate its reference frame by the radar orientation quaternion
 	radar_range_base_vector = np.array([0, fov.range, 0])
@@ -286,6 +286,7 @@ def is_point_in_fov(range, testTruth, useRadarAsCenter=True, centerLat=0, center
 	u2, v2, w2 = v2
 	x, y, z = radar_position
 	vectors = np.array([[x,y,z, u1, v1, w1],[x,y,z, u2, v2, w2]])
+	plot_radar_fov_indicators(radar_position, fov, physical, ax)
 	plot_vectors(vectors, ax)
 
 
