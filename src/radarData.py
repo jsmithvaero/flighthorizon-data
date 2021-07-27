@@ -6,6 +6,9 @@ purpose : Data handler for RADAR
 """
 import json
 import math
+import pymap3d
+import numpy as np
+from scipy.spatial.transform import Rotation
 
 from collections import OrderedDict
 from datetime    import datetime
@@ -14,6 +17,7 @@ from src.Data import Data
 from glob import glob
 from src.mathUtils        import targetBearing, targetPosition, distanceKM
 from src.genericDataUtils import getConfigName
+from src.plotGraphs import *
 
 class RadarData(Data):
 
@@ -161,35 +165,130 @@ def getRadarPoints(radar_file_name):
 						   radar_file_name))
 	return points
 
+# This is just a placeholder object that can have attributes added to it. Used for quick construction of passable objects
+class Object(object):
+    pass
+
 
 # This function will be here for future implementations when a radar logfile can contain the orientation information
 # For now it will just return a generic radar fov for Echodyne GroundAware radars.
-def get_radar_fov_and_location(radar_log_file):
+def get_radar_fov(radar_log_file):
 
-	fov = None
+	fov = Object()
 	fov.range = 5000
-	fov.range.unit = "meter"
-	fov.AzMin = 60
-	fov.AzMin.unit = "degree"
+	fov.rangeUnit = "meter"
+	fov.AzMin = -60
+	fov.AzMinUnit = "degree"
+	fov.AzMax = 60
+	fov.AzMaxUnit = "degree"
+	fov.ElMin = -40
+	fov.ElMinUnit = "degree"
+	fov.ElMax = 40
+	fov.ElMaxUnit = "degree"
 
 	# Fill out the rest here
-
-
 	return fov
 
 
-def is_point_in_fov(range):
+def get_radar_physical(radar_log_file):
+	physical = Object()
+
+	if 'src' in os.path.dirname(__file__):
+		lat, lon, alt, ori = getRadarConfigLocation('..\\' + radar_log_file)
+	else:
+		lat, lon, alt, ori = getRadarConfigLocation(radar_log_file)
+
+	physical.lat = lat
+	physical.lon = lon
+	physical.alt = alt
+	physical.heading = ori
+
+	physical.latUnit = "degree"
+	physical.lonUnit = "degree"
+	physical.altUnit = "meter"
+	physical.headingUnit = "degree"
+
+	# Temporary values for Testing, should be replaced with some refrence system to RadarConfig_*.json stuff
+	physical.pitch = 15
+	physical.roll = 0
+
+	physical.pitchUnit = "degree"
+	physical.pitchUnit = "degree"
+
+	return physical
+
+
+# Tests if testTruth is in the FoV of a radar described by a range
+def is_point_in_fov(range, testTruth, useRadarAsCenter=True, centerLat=0, centerLon=0, centerAlt=0):
 	# (datetime.datetime(2021, 1, 27, 20, 3, 20, 88000), 0.0, 65.12624067, -147.47648183, 211.8, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'demo-data/2021.january.27\\20210127T080320_radar.log')
 
-	# Using the radar's location as 0,0,0 in enu coordinates translate the plane's lat, lon, alt into enu
+	# Setup variables
+	time, conf, lat, lon, alt, dist, velVert, velX, velY, az, el, rn, radar_log_file = range
+	fov = get_radar_fov(radar_log_file)
+	physical = get_radar_physical(radar_log_file)
+
+	truthTime, truthLat, truthLon, truthAlt = testTruth
+	# Using the radar's location as 0,0,0 (optional) in enu coordinates translate the plane's lat, lon, alt into enu
+	# e:East n:North u:Up
+	if useRadarAsCenter:
+		centerLat = lat
+		centerLon = lon
+		centerAlt = alt
+
+	e, n, u = pymap3d.geodetic2enu(truthLat, truthLon, truthAlt, centerLat, centerLon, centerAlt, deg=True)
+	plane_position = np.array([e, n, u])
+	e, n, u = pymap3d.geodetic2enu(lat, lon, alt, centerLat, centerLon, centerAlt, deg=True)
+	radar_position = np.array([e, n, u])
+
 	# (v1 = plane_position-radar_position)
+	v1 = plane_position-radar_position
+
 	# Make a quaternion describing the rotation of the radar
+
+	# in roll pitch yaw x, y, z
+	# z Yaw
+	# y Pitch
+	# x Roll
+
+	# z Yaw
+	# Y Pitch
+	# x Roll
+
+	# z, y, x (roll pitch yaw) seems to be common
+	# z roll
+	# y pitch
+	# x yaw
+
+	# Another random image
+	# z Roll
+	# y yaw
+	# x pitch
+
+	# Ok, so e n u is x y z so if facing north is 0 0 0: heading is z/e, roll is y/n, pitch is z/u
+	# z heading
+	# y roll
+	# x pitch
+
+	radar_orientation = Rotation.from_euler('zyx',[-physical.heading, physical.roll, physical.pitch], degrees=True)
+
 	# Create a vector that is just [fov.range, 0,0] and then rotate its reference frame by the radar orientation quaternion
+	radar_range_base_vector = np.array([0, fov.range, 0])
 	# This creates v2 (the center fov vector of the radar)
+	radar_FoV_center_vector = radar_orientation.apply(radar_range_base_vector)
+	v2 = radar_FoV_center_vector
 	#
 	# Maybe rotate vector v1 by the frame of the radar's rotation
 	#
 	# Setup some optional test plots to check and make sure the vectors are working correctly
+	# https://stackoverflow.com/questions/27023068/plotting-3d-vectors-using-python-matplotlib
+	ax = plot_vector_setup()
+	u1, v1, w1 = v1
+	u2, v2, w2 = v2
+	x, y, z = radar_position
+	vectors = np.array([[x,y,z, u1, v1, w1],[x,y,z, u2, v2, w2]])
+	plot_vectors(vectors, ax)
+
+
 	# Find the angle between v1 and v2 vectors
 	# Normalize the vectors
 	# Compare the angle between them and check if they are out of range

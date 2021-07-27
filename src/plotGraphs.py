@@ -7,7 +7,6 @@ import matplotlib.colors as colors
 from mpl_toolkits import mplot3d
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.mplot3d import Axes3D
-from geopy import distance
 import pynmea2
 import numpy as np
 import json
@@ -341,3 +340,31 @@ def create_automated_report(rows_in_report):
 				report_text += str(tabulate(tab, ["Metric", "Value"], tablefmt="pipe"))
 	with open("AutomatedReport.md", "w") as fw:
 		fw.write(report_text)
+"""
+Code for graphing matplotlib vectors
+"""
+"""
+plot_vector 
+Adapted some code from: https://stackoverflow.com/questions/27023068/plotting-3d-vectors-using-python-matplotlib
+Input must be in the form of:
+vector = np.array([[x, y, z, u, v, w], ...])
+ax = an axis object made normally by:
+ax = fig.add_subplot(111, projection='3d')
+"""
+def plot_vectors(vector, ax):
+	x, y, z, u, v, w = zip(*vector)
+	ax.quiver(x, y, z, u, v, w)
+	max_len = max(np.abs(vector.flatten()))
+	ax.set_xlim([-max_len, max_len])
+	ax.set_ylim([-max_len, max_len])
+	ax.set_zlim([-max_len, max_len])
+
+def plot_vector_setup():
+	ax = plt.figure().add_subplot(projection='3d')
+	ax.set_xlabel('e')
+	ax.set_ylabel('n')
+	ax.set_zlabel('u')
+	return ax
+
+def plot_radar_fov_indicators(vector, fov, ax):
+	x, y, z, u, v, w = zip(*vector)
