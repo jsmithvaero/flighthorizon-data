@@ -209,7 +209,7 @@ def get_radar_physical(radar_log_file):
 	physical.headingUnit = "degree"
 
 	# Temporary values for Testing, should be replaced with some refrence system to RadarConfig_*.json stuff
-	physical.pitch = 15
+	physical.pitch = 20
 	physical.roll = 0
 
 	physical.pitchUnit = "degree"
@@ -219,7 +219,7 @@ def get_radar_physical(radar_log_file):
 
 
 # Tests if testTruth is in the FoV of a radar described by a range
-def is_point_in_fov(range, testTruth, useRadarAsCenter=True, centerLat=0, centerLon=0, centerAlt=0):
+def is_point_in_fov(range, testTruth, useRadarAsCenter=True, useRangeAsTrue=False, centerLat=0, centerLon=0, centerAlt=0):
 	# (datetime.datetime(2021, 1, 27, 20, 3, 20, 88000), 0.0, 65.12624067, -147.47648183, 211.8, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'demo-data/2021.january.27\\20210127T080320_radar.log')
 
 	# Setup variables
@@ -231,45 +231,26 @@ def is_point_in_fov(range, testTruth, useRadarAsCenter=True, centerLat=0, center
 	# Using the radar's location as 0,0,0 (optional) in enu coordinates translate the plane's lat, lon, alt into enu
 	# e:East n:North u:Up
 	if useRadarAsCenter:
-		centerLat = lat
-		centerLon = lon
-		centerAlt = alt
+		centerLat = physical.lat
+		centerLon = physical.lon
+		centerAlt = physical.alt
+
+	if useRangeAsTrue:
+		truthLat = lat
+		truthLon = lon
+		truthAlt = alt
 
 	e, n, u = pymap3d.geodetic2enu(truthLat, truthLon, truthAlt, centerLat, centerLon, centerAlt, deg=True)
 	plane_position = np.array([e, n, u])
-	e, n, u = pymap3d.geodetic2enu(lat, lon, alt, centerLat, centerLon, centerAlt, deg=True)
+	e, n, u = pymap3d.geodetic2enu(physical.lat, physical.lon, physical.alt, centerLat, centerLon, centerAlt, deg=True)
 	radar_position = np.array([e, n, u])
 
 	# (v1 = plane_position-radar_position)
 	v1 = plane_position-radar_position
 
 	# Make a quaternion describing the rotation of the radar
-
-	# in roll pitch yaw x, y, z
-	# z Yaw
-	# y Pitch
-	# x Roll
-
-	# z Yaw
-	# Y Pitch
-	# x Roll
-
-	# z, y, x (roll pitch yaw) seems to be common
-	# z roll
-	# y pitch
-	# x yaw
-
-	# Another random image
-	# z Roll
-	# y yaw
-	# x pitch
-
-	# Ok, so e n u is x y z so if facing north is 0 0 0: heading is z/e, roll is y/n, pitch is z/u
-	# z heading
-	# y roll
-	# x pitch
-
-	radar_orientation = Rotation.from_euler('ZYX',[-physical.heading, physical.roll, physical.pitch], degrees=True)
+	# this is an extrinsic rotation, not intrinsic, so capital letters
+	radar_orientation = Rotation.from_euler('ZXY', [-physical.heading, physical.pitch, physical.roll], degrees=True)
 
 	# Create a vector that is just [fov.range, 0,0] and then rotate its reference frame by the radar orientation quaternion
 	radar_range_base_vector = np.array([0, fov.range, 0])
@@ -278,20 +259,36 @@ def is_point_in_fov(range, testTruth, useRadarAsCenter=True, centerLat=0, center
 	v2 = radar_FoV_center_vector
 	#
 	# Maybe rotate vector v1 by the frame of the radar's rotation
-	#
+	# Yes I am choosing to add this, because if the v1 vector is rotated about the v2 vector by -physical.roll,
+	# it will allow planer x, y tests to work for angle ranges
+	roll_radians = np.radians(-physical.roll)
+	radar_FoV_center_vector_norm = radar_FoV_center_vector/np.linalg.norm(radar_FoV_center_vector)
+	radar_roll_rot = Rotation.from_rotvec(radar_FoV_center_vector_norm*roll_radians)
+	v1_rot = radar_roll_rot.apply(v1)
+
+
 	# Setup some optional test plots to check and make sure the vectors are working correctly
 	# https://stackoverflow.com/questions/27023068/plotting-3d-vectors-using-python-matplotlib
 	ax = plot_vector_setup()
-	u1, v1, w1 = v1
-	u2, v2, w2 = v2
+	u_1, v_1, w_1 = v1
+	u_2, v_2, w_2 = v2
 	x, y, z = radar_position
-	vectors = np.array([[x,y,z, u1, v1, w1],[x,y,z, u2, v2, w2]])
+	vectors = np.array([[x,y,z, u_1, v_1, w_1],[x,y,z, u_2, v_2, w_2]])
 	plot_radar_fov_indicators(radar_position, fov, physical, ax)
 	plot_vectors(vectors, ax)
 
 
-	# Find the angle between v1 and v2 vectors
 	# Normalize the vectors
+	norm_v1_rot = v1_rot/np.linalg.norm(v1_rot)
+	norm_v2 = v2/np.linalg.norm(v2)
+
+	# Find the angle between v1 and v2 vectors
+	v1_rot_xy = [norm_v1_rot[0], norm_v1_rot[1], 0]
+	v2_rot_xy = [norm_v2[0], norm_v2[1], 0]
+	x1, y1 = np.linalg.norm(np.cross(v1_rot_xy, v2_rot_xy)), np.dot(v1_rot_xy, v2_rot_xy)
+	relative_heading_angle = np.degrees(np.arctan2(x1, y1))
+	relative_elevation_angle = np.degrees(np.arcsin(norm_v1_rot[2] - norm_v2[2]))
+
 	# Compare the angle between them and check if they are out of range
 
 	return

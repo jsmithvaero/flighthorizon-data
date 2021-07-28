@@ -359,9 +359,11 @@ def plot_vectors(vector, ax, color='b'):
 	ax.set_xlim([-max_len, max_len])
 	ax.set_ylim([-max_len, max_len])
 	ax.set_zlim([-max_len, max_len])
+	plt.show()
 
 def plot_vector_setup():
 	ax = plt.figure().add_subplot(projection='3d')
+	ax.set_box_aspect([1, 1, 1])
 	ax.set_xlabel('e')
 	ax.set_ylabel('n')
 	ax.set_zlabel('u')
@@ -372,21 +374,26 @@ def plot_vector_setup():
 
 def plot_radar_fov_indicators(radar_position, fov, physical, ax):
 	# Make base vector for radar
-	radar_orientation = Rotation.from_euler('ZYX', [-physical.heading, physical.roll, physical.pitch], degrees=True)
+	radar_orientation = Rotation.from_euler('ZXY',[-physical.heading, physical.pitch, 0], degrees=True)
 	radar_range_base_vector = np.array([0, fov.range, 0])
 	radar_FoV_center_vector = radar_orientation.apply(radar_range_base_vector)
 	# Make vectors for BR, TR, BL, TL
-	BR_rot = Rotation.from_euler('ZYX', [-physical.heading-fov.AzMax, physical.roll, physical.pitch+fov.ElMin], degrees=True)
+	BR_rot = Rotation.from_euler('ZXY', [-physical.heading-fov.AzMax, physical.pitch+fov.ElMin, 0], degrees=True)
 	BR = BR_rot.apply(radar_range_base_vector)
-	TR_rot = Rotation.from_euler('ZYX', [-physical.heading-fov.AzMax, physical.roll, physical.pitch+fov.ElMax], degrees=True)
+	TR_rot = Rotation.from_euler('ZXY', [-physical.heading-fov.AzMax, physical.pitch+fov.ElMax, 0], degrees=True)
 	TR = TR_rot.apply(radar_range_base_vector)
 
-	BL_rot = Rotation.from_euler('ZYX', [-physical.heading - fov.AzMin, physical.roll, physical.pitch + fov.ElMin],
-								 degrees=True)
+	BL_rot = Rotation.from_euler('ZXY', [-physical.heading-fov.AzMin, physical.pitch+fov.ElMin, 0], degrees=True)
 	BL = BL_rot.apply(radar_range_base_vector)
-	TL_rot = Rotation.from_euler('ZYX', [-physical.heading - fov.AzMin, physical.roll, physical.pitch + fov.ElMax],
-								 degrees=True)
+	TL_rot = Rotation.from_euler('ZXY', [-physical.heading-fov.AzMin, physical.pitch+fov.ElMax, 0], degrees=True)
 	TL = TL_rot.apply(radar_range_base_vector)
+
+	# Rotate by roll amount about the base vector for roll to show
+	# TODO: Test this more with real data, make sure the direction of roll is correct
+	roll_radians = np.radians(physical.roll)
+	radar_FoV_center_vector_norm = radar_FoV_center_vector/np.linalg.norm(radar_FoV_center_vector)
+	roll_rot = Rotation.from_rotvec(radar_FoV_center_vector_norm*roll_radians)
+	BR, TR, BL, TL = roll_rot.apply([BR, TR, BL, TL])
 
 	# breakout and compose into vectors
 	uBR, vBR, wBR = BR
@@ -397,6 +404,8 @@ def plot_radar_fov_indicators(radar_position, fov, physical, ax):
 	x, y, z = radar_position
 
 	vectors = np.array([[x,y,z, uBR, vBR, wBR], [x,y,z, uTR, vTR, wTR], [x,y,z, uBL, vBL, wBL], [x,y,z, uTL, vTL, wTL]])
+
+	""", [x,y,z, uBL, vBL, wBL], [x,y,z, uTL, vTL, wTL]"""
 
 	# plot the vectors
 	plot_vectors(vectors, ax, color='r')

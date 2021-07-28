@@ -25,7 +25,7 @@ def main():
 
     testTruth=(datetime.datetime(2021, 1, 27, 20, 43, 1), 65.1283760368824, -147.47867703437805, 407.74)
 
-    is_point_in_fov(testRange2, testTruth)
+    is_point_in_fov(testRange2, testTruth, useRangeAsTrue=False)
 
 
 if __name__ == "__main__":
