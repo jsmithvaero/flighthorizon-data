@@ -359,7 +359,7 @@ def plot_vectors(vector, ax, color='b'):
 	ax.set_xlim([-max_len, max_len])
 	ax.set_ylim([-max_len, max_len])
 	ax.set_zlim([-max_len, max_len])
-	plt.show()
+
 
 def plot_vector_setup():
 	ax = plt.figure().add_subplot(projection='3d')
