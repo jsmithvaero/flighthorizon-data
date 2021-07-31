@@ -58,6 +58,7 @@ def getADSBpoints(adsb_file_name):
 				p.longitude = lon
 				p.altitude  = alt
 				points.append(p)
+
 	return points
 
 """
@@ -96,6 +97,7 @@ def getNMEApoints(nmea_file_name, date):
 				p.stamp     = datetime.combine(date, msg.timestamp)
 				
 				points.add(p)
+
 			except:
 				# who cares :D
 				continue
@@ -215,6 +217,7 @@ def getMavlinkPoints(mavlink_file_name):
 				p.altitude  = alt
 
 				points.append(p)
+
 	return points
 
 def fixBrokenMavlinkCoords(coord):

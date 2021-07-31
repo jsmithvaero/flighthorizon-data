@@ -23,6 +23,7 @@ def PAC(time, lat, lon, alt, truth):
 		   None == truth_point.altitude:
 
 		   print(json.dumps(truth_point.__dict__))
+
 		   return False
 
 		if ((truth_point.stamp - time).total_seconds() <= 60):
