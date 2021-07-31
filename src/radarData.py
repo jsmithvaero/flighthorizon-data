@@ -19,6 +19,10 @@ from src.mathUtils        import targetBearing, targetPosition, distanceKM
 from src.genericDataUtils import getConfigName
 from src.plotGraphs import *
 
+# Levi's trick.
+class Point(object):
+	pass
+
 class RadarData(Data):
 
 	folder         = None
@@ -44,22 +48,7 @@ class RadarData(Data):
 
 	# Should return the current format
 	def getFormat(self):
-		ret         = OrderedDict()
-		ret["name"] = OrderedDict()
-		ret["name"]["time"            ] = "datetime"
-		ret["name"]["confidence"      ] = "percent"
-		ret["name"]["latitude"        ] = "degree"
-		ret["name"]["longitude"       ] = "degree"
-		ret["name"]["altitude"        ] = "meter"
-		ret["name"]["distance"        ] = "meter"
-		ret["name"]["verticalVelocity"] = "meter/second"
-		ret["name"]["xVelocity"       ] = "meter/second"
-		ret["name"]["yVelocity"       ] = "meter/second"
-		ret["name"]["azimuth"         ] = "degree"
-		ret["name"]["elevation"       ] = "degree"
-		ret["name"]["range"           ] = "meter"
-		ret["name"]["source"          ] = "filename"
-		return ret
+		return json.dumps(self.__dict__)
 
 	"""
 	Extra Functionality That Extends Data Class
@@ -150,40 +139,47 @@ def getRadarPoints(radar_file_name):
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%SZ")
 			conf = entry["confidenceLevel"]
-			points.append((time,
-				           conf, 
-				           lat, 
-				           lon, 
-				           alt, 
-				           dist, 
-				           velVert, 
-				           velX, 
-				           velY,
-						   az,
-						   el,
-						   rn,
-						   radar_file_name))
+			
+			p                  = Point()
+			p.stamp            = time
+			p.confidence       = conf
+			p.latitude         = lat
+			p.longitude        = lon
+			p.altitude         = alt
+			p.distance         = dist
+			p.verticalVelocity = velVert
+			p.xVelocity        = velX
+			p.yVelocity        = velY
+			p.azimuth          = az
+			p.elevation        = el
+			p.range            = rn
+			p.src              = radar_file_name
+			points.append(p)
+
 	return points
 
-# This is just a placeholder object that can have attributes added to it. Used for quick construction of passable objects
+# This is just a placeholder object that can have 
+# attributes added to it. Used for quick construction of passable objects
 class Object(object):
     pass
 
 
-# This function will be here for future implementations when a radar logfile can contain the orientation information
+# This function will be here for future implementations when a radar 
+# logfile can contain the orientation information
 # For now it will just return a generic radar fov for Echodyne GroundAware radars.
 def get_radar_fov(radar_log_file):
 
 	fov = Object()
-	fov.range = 5000
+
+	fov.range     = 5000
 	fov.rangeUnit = "meter"
-	fov.AzMin = -60
+	fov.AzMin     = -60
 	fov.AzMinUnit = "degree"
-	fov.AzMax = 60
+	fov.AzMax     = 60
 	fov.AzMaxUnit = "degree"
-	fov.ElMin = -40
+	fov.ElMin     = -40
 	fov.ElMinUnit = "degree"
-	fov.ElMax = 40
+	fov.ElMax     = 40
 	fov.ElMaxUnit = "degree"
 
 	# Fill out the rest here
@@ -219,19 +215,37 @@ def get_radar_physical(radar_log_file):
 
 
 # Tests if testTruth is in the FoV of a radar described by a range
-# Unless a breakpoint is set before plot_vectors(vectors, ax) generate_debug_graph will freeze the execution
-def is_point_in_fov(range, testTruth, useRadarAsCenter=True, useRangeAsTrue=False,
-					calculate_Az_El_when_out_of_range=True, generate_debug_graph=False, centerLat=0, centerLon=0, centerAlt=0):
-	# (datetime.datetime(2021, 1, 27, 20, 3, 20, 88000), 0.0, 65.12624067, -147.47648183, 211.8, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 'demo-data/2021.january.27\\20210127T080320_radar.log')
+# Unless a breakpoint is set before plot_vectors(vectors, ax) 
+# generate_debug_graph will freeze the execution
+def is_point_in_fov(
+	_range, 
+	testTruth, 
+	useRadarAsCenter=True, 
+	useRangeAsTrue=False,
+	calculate_Az_El_when_out_of_range=True, 
+	generate_debug_graph=False, 
+	centerLat=0, 
+	centerLon=0, 
+	centerAlt=0):
+
+	# (datetime.datetime(2021, 1, 27, 20, 3, 20, 88000), 
+	# 0.0, 65.12624067, -147.47648183, 211.8, 0, 0.0, 0.0, 0.0, 
+	# 0.0, 0.0, 0.0, 'demo-data/2021.january.27\\20210127T080320_radar.log')
 
 	# Setup variables
-	time, conf, lat, lon, alt, dist, velVert, velX, velY, az, el, rn, radar_log_file = range
+	
+	time, conf, lat, lon, alt, dist, velVert, velX, velY, az, el, rn, radar_log_file = _range
+	
 	fov = get_radar_fov(radar_log_file)
 	physical = get_radar_physical(radar_log_file)
-	return_object = Object() # in the future this could be a defined class of its own. It could describe the solved properties of an encounter
+	
+	return_object = Object() 
+	# in the future this could be a defined class of its 
+	# own. It could describe the solved properties of an encounter
 
 	truthTime, truthLat, truthLon, truthAlt = testTruth
-	# Using the radar's location as 0,0,0 (optional) in enu coordinates translate the plane's lat, lon, alt into enu
+	# Using the radar's location as 0,0,0 (optional) in enu coordinates 
+	# translate the plane's lat, lon, alt into enu
 	# e:East n:North u:Up
 	if useRadarAsCenter:
 		centerLat = physical.lat
@@ -243,9 +257,24 @@ def is_point_in_fov(range, testTruth, useRadarAsCenter=True, useRangeAsTrue=Fals
 		truthLon = lon
 		truthAlt = alt
 
-	e, n, u = pymap3d.geodetic2enu(truthLat, truthLon, truthAlt, centerLat, centerLon, centerAlt, deg=True)
+	e, n, u = pymap3d.geodetic2enu(truthLat, 
+		                           truthLon, 
+		                           truthAlt, 
+		                           centerLat, 
+		                           centerLon, 
+		                           centerAlt, 
+		                           deg=True)
+	
 	plane_position = np.array([e, n, u])
-	e, n, u = pymap3d.geodetic2enu(physical.lat, physical.lon, physical.alt, centerLat, centerLon, centerAlt, deg=True)
+	
+	e, n, u = pymap3d.geodetic2enu(physical.lat, 
+		                           physical.lon, 
+		                           physical.alt, 
+		                           centerLat, 
+		                           centerLon, 
+		                           centerAlt, 
+		                           deg=True)
+	
 	radar_position = np.array([e, n, u])
 
 	# (v1 = plane_position-radar_position)
@@ -264,20 +293,34 @@ def is_point_in_fov(range, testTruth, useRadarAsCenter=True, useRangeAsTrue=Fals
 		# Make a quaternion describing the rotation of the radar
 		# this is an extrinsic rotation, not intrinsic, so capital letters
 		# remember e, n, u coordinate system, x, y, z
-		radar_orientation = Rotation.from_euler('ZXY', [-physical.heading, physical.pitch, physical.roll], degrees=True)
+		
+		radar_orientation = Rotation.from_euler('ZXY', 
+			                                    [-physical.heading, 
+			                                      physical.pitch, 
+			                                      physical.roll
+			                                    ], 
+			                                    degrees=True)
 
-		# Create a vector that is just [fov.range, 0,0] and then rotate its reference frame by the radar orientation quaternion
+		# Create a vector that is just [fov.range, 0,0] and then rotate its 
+		# reference frame by the radar orientation quaternion
+		
 		radar_range_base_vector = np.array([0, fov.range, 0])
+		
 		# This creates v2 (the center fov vector of the radar)
 		radar_FoV_center_vector = radar_orientation.apply(radar_range_base_vector)
 		v2 = radar_FoV_center_vector
-		#
+		
 		# Maybe rotate vector v1 by the frame of the radar's rotation
-		# Yes I am choosing to add this, because if the v1 vector is rotated about the v2 vector by -physical.roll,
+		# Yes I am choosing to add this, because if the v1 vector is rotated 
+		# about the v2 vector by -physical.roll,
 		# it will allow planer x, y tests to work for angle ranges
+		
 		roll_radians = np.radians(-physical.roll)
-		radar_FoV_center_vector_norm = radar_FoV_center_vector/np.linalg.norm(radar_FoV_center_vector)
-		radar_roll_rot = Rotation.from_rotvec(radar_FoV_center_vector_norm*roll_radians)
+		
+		radar_FoV_center_vector_norm = radar_FoV_center_vector / np.linalg.norm(radar_FoV_center_vector)
+		
+		radar_roll_rot = Rotation.from_rotvec(radar_FoV_center_vector_norm * roll_radians)
+		
 		v1_rot = radar_roll_rot.apply(v1)
 
 		if generate_debug_graph:

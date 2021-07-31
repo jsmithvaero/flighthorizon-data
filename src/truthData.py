@@ -92,10 +92,10 @@ def getNMEApoints(nmea_file_name, date):
 	with open(nmea_file_name, "r", encoding='utf-8') as fr:
 		for line in fr:
 			try:
-				msg = pynmea2.parse(line)
-				lat = msg.latitude
-				lon = msg.longitude
-				alt = msg.altitude
+				msg  = pynmea2.parse(line)
+				lat  = msg.latitude
+				lon  = msg.longitude
+				alt  = msg.altitude
 				time = datetime.combine(date, msg.timestamp)
 				points.add((time, lat, lon, alt))
 			except:

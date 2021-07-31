@@ -165,196 +165,95 @@ class Question:
 """
 
 def distancesFromRadarParser(RD, TD=None):
-	ret = []
-	
-	for (stamp, \
-		 conf,  \
-		 lat,   \
-		 lon,   \
-		 alt,   \
-		 dist,  \
-		 vertV, \
-		 xV,    \
-		 yV,    \
-		 az,    \
-		 el,    \
-		 rn,    \
-		 src) in RD.getPoints():
-
-		ret.append((stamp, dist)) 
-	return sorted(ret)
+	return sorted(
+		[(point.stamp, point.distance) for point in RD.getPoints()])
 
 def confidencesOfRadar(RD, TD=None):
-	ret = []
-	
-	for (stamp, \
-		 conf,  \
-		 lat,   \
-		 lon,   \
-		 alt,   \
-		 dist,  \
-		 vertV, \
-		 xV,    \
-		 yV,    \
-		 az,    \
-		 el,    \
-		 rn,    \
-		 src) in RD.getPoints():
-
-		ret.append((stamp, conf)) 
-
-	return sorted(ret)
+	return sorted(
+		[(point.stamp, point.confidence) for point in RD.getPoints()])
 
 def altitudesOfRadarTarget(RD, TD=None):
-	ret = []
-	
-	for (stamp, \
-		 conf,  \
-		 lat,   \
-		 lon,   \
-		 alt,   \
-		 dist,  \
-		 vertV, \
-		 xV,    \
-		 yV,    \
-		 az,    \
-		 el,    \
-		 rn,    \
-		 src) in RD.getPoints():
-
-		ret.append((stamp, alt)) 
-
-	return sorted(ret)
+	return sorted(
+		[(point.stamp, point.altitude) for point in RD.getPoints()])
 
 def _stampedSecondWindowFrequencies(some_points):
 	stamped_second_window_frequencies = []
-	for (stamp, conf, alt, lat, lon, dist) in some_points:
+	for point in some_points:
 		second_window = [
 			s for s in some_points
-			if abs((stamp - s[0]).total_seconds()) <= 1
-			and s != (stamp, conf, alt, lat, lon, dist)
+			if abs((point.stamp - s.stamp).total_seconds()) <= 1
+			and s != point
 		]
 		frequency = len(second_window)
-		stamped_second_window_frequencies.append((stamp, frequency))
+		stamped_second_window_frequencies.append((point.stamp, \
+			                                      point.frequency))
+
 	return stamped_second_window_frequencies
 
 def frequenciesOfValidRadarPoints(RD, TD):
 	pac_points = []
 	
-	for (stamp, \
-		 conf,  \
-		 lat,   \
-		 lon,   \
-		 alt,   \
-		 dist,  \
-		 vertV, \
-		 xV,    \
-		 yV,    \
-		 az,    \
-		 el,    \
-		 rn,    \
-		 src) in RD.getPoints():
+	for point in RD.getPoints():
 
-		if PAC(stamp, lat, lon, alt, TD.getPoints()):
-			pac_points.append((stamp, conf, alt, lat, lon, dist))
+		if PAC(point.stamp,     \
+			   point.latitude,  \
+			   point.longitude, \
+			   point.altitude,  \
+			   TD.getPoints()):
+
+			pac_points.append((point.stamp,      \
+				               poinr.confidence, \
+				               point.altitude,   \
+				               point.latitude,   \
+				               point.longitude,  \
+				               point.distance))
 	
 	return _stampedSecondWindowFrequencies(pac_points)
 
 def frequenciesOfInValidRadarPoints(RD, TD):
 	not_pac_points = []
 	
-	for (stamp, \
-		 conf,  \
-		 lat,   \
-		 lon,   \
-		 alt,   \
-		 dist,  \
-		 vertV, \
-		 xV,    \
-		 yV,    \
-		 az,    \
-		 el,    \
-		 rn,    \
-		 src) in RD.getPoints():
+	for point in RD.getPoints():
 
-		if not PAC(stamp, lat, lon, alt, TD.getPoints()):
-			not_pac_points.append((stamp, conf, alt, lat, lon, dist))
+		if not PAC(point.stamp,     \
+			       point.latitude,  \
+			       point.longitude, \
+			       point.altitude,  \
+			       TD.getPoints()):
+
+			not_pac_points.append((point.stamp,      \
+				                   point.confidence, \
+				                   point.altitude,   \
+				                   point.latitude,   \
+				                   point.longitude,  \
+				                   point.distance))
 
 	return _stampedSecondWindowFrequencies(not_pac_points)
 
 def verticalVelocities(RD, TD=None):
 	return [
-		(stamp, vertV) 
-	    for (stamp, \
-			 conf,  \
-			 lat,   \
-			 lon,   \
-			 alt,   \
-			 dist,  \
-			 vertV, \
-			 xV,    \
-			 yV,    \
-			 az,    \
-			 el,    \
-			 rn,    \
-			 src)
-	    in RD.getPoints()
+		(point.stamp, point.verticalVelocity) 
+	    for point in RD.getPoints()
 	]
 
 def horizontalSpeeds(RD, TD=None):
 	return [
-		(stamp, (xV ** 2 + yV ** 2) ** 0.5) 
-	    for (stamp, \
-			 conf,  \
-			 lat,   \
-			 lon,   \
-			 alt,   \
-			 dist,  \
-			 vertV, \
-			 xV,    \
-			 yV,    \
-			 az,    \
-			 el,    \
-			 rn,    \
-			 src)
+		(point.stamp, (point.xVelocity ** 2 + point.yVelocity ** 2) ** 0.5) 
+	    for point
 	    in RD.getPoints()
 	]
 
 def xVelocities(RD, TD=None):
 	return [
-		(stamp, xV) 
-	    for (stamp, \
-			 conf,  \
-			 lat,   \
-			 lon,   \
-			 alt,   \
-			 dist,  \
-			 vertV, \
-			 xV,    \
-			 yV,    \
-			 az,    \
-			 el,    \
-			 rn,    \
-			 src)
+		(point.stamp, point.xVelocity) 
+	    for point
 	    in RD.getPoints()
 	]
 
 def yVelocities(RD, TD=None):
 	return [
-		(stamp, yV) 
-	    for (stamp, \
-			 conf,  \
-			 lat,   \
-			 lon,   \
-			 alt,   \
-			 dist,  \
-			 vertV, \
-			 xV,    \
-			 yV,    \
-			 az,    \
-			 el,    \
-			 rn,    \
-			 src) 
+		(point.stamp, point.yVelocity) 
+	    for point 
 	    in RD.getPoints()
 	]
 
