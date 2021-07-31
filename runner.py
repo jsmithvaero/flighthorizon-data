@@ -38,8 +38,8 @@ def main():
     BLOCKS = radarTruthBlocks(radarD.getPoints(), truthD.getPoints())
 
     BLOCKED_DATAS = [
-        (RadarData(folder=None,points=radarBlock),
-         TruthData(folder=None,points=truthBlock))
+        (RadarData(folder=None, points=radarBlock),
+         TruthData(folder=None, points=truthBlock))
         for (radarBlock, truthBlock)
         in BLOCKS
     ]
@@ -53,6 +53,7 @@ def main():
 
     # Finally, let's answer some questions, over the various blocks.
     for (RD, TD) in BLOCKED_DATAS:
+
 
         for countI, (independent_parser, independent_name) in enumerate(INDEPENDENTS):
             for countD, (dependent_parser, dependent_name) in enumerate(DEPENDENTS):

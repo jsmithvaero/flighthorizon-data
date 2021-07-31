@@ -186,7 +186,7 @@ def _stampedSecondWindowFrequencies(some_points):
 		]
 		frequency = len(second_window)
 		stamped_second_window_frequencies.append((point.stamp, \
-			                                      point.frequency))
+			                                      frequency))
 
 	return stamped_second_window_frequencies
 
@@ -201,12 +201,7 @@ def frequenciesOfValidRadarPoints(RD, TD):
 			   point.altitude,  \
 			   TD.getPoints()):
 
-			pac_points.append((point.stamp,      \
-				               poinr.confidence, \
-				               point.altitude,   \
-				               point.latitude,   \
-				               point.longitude,  \
-				               point.distance))
+			pac_points.append(point)
 	
 	return _stampedSecondWindowFrequencies(pac_points)
 
@@ -221,12 +216,7 @@ def frequenciesOfInValidRadarPoints(RD, TD):
 			       point.altitude,  \
 			       TD.getPoints()):
 
-			not_pac_points.append((point.stamp,      \
-				                   point.confidence, \
-				                   point.altitude,   \
-				                   point.latitude,   \
-				                   point.longitude,  \
-				                   point.distance))
+			not_pac_points.append(point)
 
 	return _stampedSecondWindowFrequencies(not_pac_points)
 
