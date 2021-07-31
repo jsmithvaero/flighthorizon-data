@@ -5,3 +5,4 @@ pynmea2
 cartopy
 traces
 pandas
+pymap3d

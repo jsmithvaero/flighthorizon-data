@@ -135,7 +135,9 @@ class Question:
 		datestr = str(min(allStamps)) + " to " + str(max(allStamps))
 		title += datestr
 
-		# For more complex plots we should be using fig = plt.figure(), but just adding plt.clf() is a simple solution
+		# For more complex plots we should be using fig = plt.figure(), 
+		# but just adding plt.clf() is a simple solution
+
 		#fig = plt.figure()
 		#ax = fig.add_subplot(1,1,1)
 
@@ -164,20 +166,64 @@ class Question:
 
 def distancesFromRadarParser(RD, TD=None):
 	ret = []
-	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
+	
+	for (stamp, \
+		 conf,  \
+		 lat,   \
+		 lon,   \
+		 alt,   \
+		 dist,  \
+		 vertV, \
+		 xV,    \
+		 yV,    \
+		 az,    \
+		 el,    \
+		 rn,    \
+		 src) in RD.getPoints():
+
 		ret.append((stamp, dist)) 
 	return sorted(ret)
 
 def confidencesOfRadar(RD, TD=None):
 	ret = []
-	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
+	
+	for (stamp, \
+		 conf,  \
+		 lat,   \
+		 lon,   \
+		 alt,   \
+		 dist,  \
+		 vertV, \
+		 xV,    \
+		 yV,    \
+		 az,    \
+		 el,    \
+		 rn,    \
+		 src) in RD.getPoints():
+
 		ret.append((stamp, conf)) 
+
 	return sorted(ret)
 
 def altitudesOfRadarTarget(RD, TD=None):
 	ret = []
-	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
+	
+	for (stamp, \
+		 conf,  \
+		 lat,   \
+		 lon,   \
+		 alt,   \
+		 dist,  \
+		 vertV, \
+		 xV,    \
+		 yV,    \
+		 az,    \
+		 el,    \
+		 rn,    \
+		 src) in RD.getPoints():
+
 		ret.append((stamp, alt)) 
+
 	return sorted(ret)
 
 def _stampedSecondWindowFrequencies(some_points):
@@ -194,43 +240,121 @@ def _stampedSecondWindowFrequencies(some_points):
 
 def frequenciesOfValidRadarPoints(RD, TD):
 	pac_points = []
-	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
+	
+	for (stamp, \
+		 conf,  \
+		 lat,   \
+		 lon,   \
+		 alt,   \
+		 dist,  \
+		 vertV, \
+		 xV,    \
+		 yV,    \
+		 az,    \
+		 el,    \
+		 rn,    \
+		 src) in RD.getPoints():
+
 		if PAC(stamp, lat, lon, alt, TD.getPoints()):
 			pac_points.append((stamp, conf, alt, lat, lon, dist))
+	
 	return _stampedSecondWindowFrequencies(pac_points)
 
 def frequenciesOfInValidRadarPoints(RD, TD):
 	not_pac_points = []
-	for (stamp, conf, alt, lat, lon, dist, _, _, _) in RD.getPoints():
+	
+	for (stamp, \
+		 conf,  \
+		 lat,   \
+		 lon,   \
+		 alt,   \
+		 dist,  \
+		 vertV, \
+		 xV,    \
+		 yV,    \
+		 az,    \
+		 el,    \
+		 rn,    \
+		 src) in RD.getPoints():
+
 		if not PAC(stamp, lat, lon, alt, TD.getPoints()):
 			not_pac_points.append((stamp, conf, alt, lat, lon, dist))
+
 	return _stampedSecondWindowFrequencies(not_pac_points)
 
 def verticalVelocities(RD, TD=None):
 	return [
-		(stamp, zV) 
-	    for (stamp, conf, alt, lat, lon, dist, zV, xV, yV) 
+		(stamp, vertV) 
+	    for (stamp, \
+			 conf,  \
+			 lat,   \
+			 lon,   \
+			 alt,   \
+			 dist,  \
+			 vertV, \
+			 xV,    \
+			 yV,    \
+			 az,    \
+			 el,    \
+			 rn,    \
+			 src)
 	    in RD.getPoints()
 	]
 
 def horizontalSpeeds(RD, TD=None):
 	return [
 		(stamp, (xV ** 2 + yV ** 2) ** 0.5) 
-	    for (stamp, conf, alt, lat, lon, dist, zV, xV, yV) 
+	    for (stamp, \
+			 conf,  \
+			 lat,   \
+			 lon,   \
+			 alt,   \
+			 dist,  \
+			 vertV, \
+			 xV,    \
+			 yV,    \
+			 az,    \
+			 el,    \
+			 rn,    \
+			 src)
 	    in RD.getPoints()
 	]
 
 def xVelocities(RD, TD=None):
 	return [
 		(stamp, xV) 
-	    for (stamp, conf, alt, lat, lon, dist, zV, xV, yV) 
+	    for (stamp, \
+			 conf,  \
+			 lat,   \
+			 lon,   \
+			 alt,   \
+			 dist,  \
+			 vertV, \
+			 xV,    \
+			 yV,    \
+			 az,    \
+			 el,    \
+			 rn,    \
+			 src)
 	    in RD.getPoints()
 	]
 
 def yVelocities(RD, TD=None):
 	return [
 		(stamp, yV) 
-	    for (stamp, conf, alt, lat, lon, dist, zV, xV, yV) 
+	    for (stamp, \
+			 conf,  \
+			 lat,   \
+			 lon,   \
+			 alt,   \
+			 dist,  \
+			 vertV, \
+			 xV,    \
+			 yV,    \
+			 az,    \
+			 el,    \
+			 rn,    \
+			 src) 
 	    in RD.getPoints()
 	]
 

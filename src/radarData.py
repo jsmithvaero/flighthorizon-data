@@ -55,10 +55,10 @@ class RadarData(Data):
 		ret["name"]["verticalVelocity"] = "meter/second"
 		ret["name"]["xVelocity"       ] = "meter/second"
 		ret["name"]["yVelocity"       ] = "meter/second"
-		ret["name"]["azimuth"] = "degree"
-		ret["name"]["elevation"] = "degree"
-		ret["name"]["range"] = "meter"
-		ret["name"]["source"] = "filename"
+		ret["name"]["azimuth"         ] = "degree"
+		ret["name"]["elevation"       ] = "degree"
+		ret["name"]["range"           ] = "meter"
+		ret["name"]["source"          ] = "filename"
 		return ret
 
 	"""
