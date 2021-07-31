@@ -11,6 +11,7 @@ class TruthData(Data):
 	# Should return the current format
 	def getFormat(self):
 		ret = OrderedDict()
+		ret["filename" ] = "file"
 		ret["time"     ] = "datetime"
 		ret["latitude" ] = "degree"
 		ret["longitude"] = "degree"
@@ -63,7 +64,7 @@ def getADSBpoints(adsb_file_name):
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%SZ")
 			if (lat, lon) != (0.0, 0.0):
-				points.append((time, lat, lon, alt))
+				points.append((adsb_file_name, time, lat, lon, alt))
 	return points
 
 """
@@ -97,7 +98,7 @@ def getNMEApoints(nmea_file_name, date):
 				lon = msg.longitude
 				alt = msg.altitude
 				time = datetime.combine(date, msg.timestamp)
-				points.add((time, lat, lon, alt))
+				points.add((nmea_file_name, time, lat, lon, alt))
 			except:
 				# who cares :D
 				continue
@@ -160,7 +161,7 @@ def getGPXpoints(gpx_file_name):
 
 			if (lat != None and lon != None and ele != None and time != None):
 
-				points.add((time, lat, lon, ele))
+				points.add((gpx_file_name, time, lat, lon, ele))
 				lat, lon, ele, time = None, None, None, None
 
 	return points
@@ -199,7 +200,7 @@ def getMavlinkPoints(mavlink_file_name):
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%SZ")
 			if (lat, lon, alt) != (0.0, 0.0, 0.0):
-				points.append((time, lat, lon, alt))
+				points.append((mavlink_file_name, time, lat, lon, alt))
 	return points
 
 def fixBrokenMavlinkCoords(coord):

@@ -29,8 +29,8 @@ def radarTruthBlocks(radar_data, truth_data):
 			maxtime = radar_block[-1][0]
 
 			truth_block = [
-				(time, lat, lon, alt) for
-				(time, lat, lon, alt) in truth_data
+				(file, time, lat, lon, alt) for
+				(file, time, lat, lon, alt) in truth_data
 				if ((mintime <= time) and (time <= maxtime))
 			]
 

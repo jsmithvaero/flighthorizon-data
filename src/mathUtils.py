@@ -15,13 +15,14 @@ given radar point.  We can use this as a kind of simple "validity" check for
 radar data, although it is obviously imperfect.
 """
 def PAC(time, lat, lon, alt, truth):
-	for (time_truth, lat_truth, lon_truth, alt_truth) in truth:
+	for (file_truth, time_truth, lat_truth, lon_truth, alt_truth) in truth:
 		
-		if None == time_truth or \
+		if None == file_truth or \
+		   None == time_truth or \
 		   None == lat_truth  or \
 		   None == lon_truth  or \
 		   None == alt_truth:
-		   print(time_truth, lat_truth, lon_truth, alt_truth)
+		   print(file_truth, time_truth, lat_truth, lon_truth, alt_truth)
 		   return False
 
 		if ((time_truth - time).total_seconds() <= 60):
