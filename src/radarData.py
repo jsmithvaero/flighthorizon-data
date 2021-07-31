@@ -8,20 +8,18 @@ import json
 import math
 import pymap3d
 import numpy as np
+
 from scipy.spatial.transform import Rotation
 
 from collections import OrderedDict
 from datetime    import datetime
 
-from src.Data import Data
-from glob import glob
+from src.Data             import Data
+from glob                 import glob
 from src.mathUtils        import targetBearing, targetPosition, distanceKM
 from src.genericDataUtils import getConfigName
-from src.plotGraphs import *
-
-# Levi's trick.
-class Point(object):
-	pass
+from src.plotGraphs       import *
+from src.Point            import Point
 
 class RadarData(Data):
 
@@ -45,10 +43,6 @@ class RadarData(Data):
 				else:
 					points[subname] = subpoints
 		self.points = points 
-
-	# Should return the current format
-	def getFormat(self):
-		return json.dumps(self.__dict__)
 
 	"""
 	Extra Functionality That Extends Data Class
@@ -158,18 +152,12 @@ def getRadarPoints(radar_file_name):
 
 	return points
 
-# This is just a placeholder object that can have 
-# attributes added to it. Used for quick construction of passable objects
-class Object(object):
-    pass
-
-
 # This function will be here for future implementations when a radar 
 # logfile can contain the orientation information
 # For now it will just return a generic radar fov for Echodyne GroundAware radars.
 def get_radar_fov(radar_log_file):
 
-	fov = Object()
+	fov = Point()
 
 	fov.range     = 5000
 	fov.rangeUnit = "meter"
@@ -187,7 +175,7 @@ def get_radar_fov(radar_log_file):
 
 
 def get_radar_physical(radar_log_file):
-	physical = Object()
+	physical = Point()
 
 	if 'src' in os.path.dirname(__file__):
 		lat, lon, alt, ori = getRadarConfigLocation('..\\' + radar_log_file)
@@ -239,9 +227,7 @@ def is_point_in_fov(
 	fov = get_radar_fov(radar_log_file)
 	physical = get_radar_physical(radar_log_file)
 	
-	return_object = Object() 
-	# in the future this could be a defined class of its 
-	# own. It could describe the solved properties of an encounter
+	return_object = Point()
 
 	truthTime, truthLat, truthLon, truthAlt = testTruth
 	# Using the radar's location as 0,0,0 (optional) in enu coordinates 

@@ -29,9 +29,8 @@ def radarTruthBlocks(radar_data, truth_data):
 			maxtime = radar_block[-1].stamp
 
 			truth_block = [
-				(time, lat, lon, alt) for
-				(time, lat, lon, alt) in truth_data
-				if ((mintime <= time) and (time <= maxtime))
+				p for p in truth_data
+				if ((mintime <= p.stamp) and (p.stamp <= maxtime))
 			]
 
 			BLOCKS.append((radar_block, truth_block))

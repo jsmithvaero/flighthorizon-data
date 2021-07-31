@@ -5,6 +5,7 @@ authored: 4 July 2021
 purpose : Mathematical utilities used in other scripts.
 """
 import math
+import json
 
 from datetime import datetime
 
@@ -15,20 +16,20 @@ given radar point.  We can use this as a kind of simple "validity" check for
 radar data, although it is obviously imperfect.
 """
 def PAC(time, lat, lon, alt, truth):
-	for (time_truth, lat_truth, lon_truth, alt_truth) in truth:
-		
-		if None == time_truth or \
-		   None == lat_truth  or \
-		   None == lon_truth  or \
-		   None == alt_truth:
-		   print(time_truth, lat_truth, lon_truth, alt_truth)
+	for truth_point in truth:	
+		if None == truth_point.stamp     or \
+		   None == truth_point.latitude  or \
+		   None == truth_point.longitude or \
+		   None == truth_point.altitude:
+
+		   print(json.dumps(truth_point.__dict__))
 		   return False
 
-		if ((time_truth - time).total_seconds() <= 60):
+		if ((truth_point.stamp - time).total_seconds() <= 60):
 			continue
-		if (distanceKM(lat_truth, lon_truth, lat, lon) / 1000) < 10:
+		if (distanceKM(truth_point.latitude, truth_point.longitude, lat, lon) / 1000) < 10:
 			continue
-		if (abs(alt - alt_truth) < 10):
+		if (abs(alt - truth_point.altitude) < 10):
 			continue
 		return True
 	return False
