@@ -1,33 +1,33 @@
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from matplotlib import gridspec
-import matplotlib.units as munits
-import matplotlib.dates as mdates
-import matplotlib.colors as colors
-from mpl_toolkits import mplot3d
-from mpl_toolkits.basemap import Basemap
-from mpl_toolkits.mplot3d import Axes3D
-from geopy import distance
+import matplotlib              as mpl
+import matplotlib.pyplot       as plt
+from   matplotlib              import gridspec
+import matplotlib.units        as munits
+import matplotlib.dates        as mdates
+import matplotlib.colors       as colors
+from   mpl_toolkits            import mplot3d
+from   mpl_toolkits.basemap    import Basemap
+from   mpl_toolkits.mplot3d    import Axes3D
 import pynmea2
-import numpy as np
+import numpy                   as np
 import json
 import os
 import sys
 import math
 import ntpath
-from datetime import datetime, date
-from glob import glob
+from   datetime                import datetime, date
+from   glob                    import glob
 import traceback
-from deflate_dict import deflate
-from dictances import *
-from tabulate import tabulate
-from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-import cartopy.crs as ccrs
+from   deflate_dict            import deflate
+from   dictances               import *
+from   tabulate                import tabulate
+from   cartopy.mpl.ticker      import LongitudeFormatter, LatitudeFormatter
+import cartopy.crs             as ccrs
+from   scipy.spatial.transform import Rotation
 
-converter = mdates.ConciseDateConverter()
+converter                      = mdates.ConciseDateConverter()
 munits.registry[np.datetime64] = converter
-munits.registry[date] = converter
-munits.registry[datetime] = converter
+munits.registry[date]          = converter
+munits.registry[datetime]      = converter
 
 mpl.rc('font', size=8)
 cmap = mpl\
@@ -37,25 +37,31 @@ cmap = mpl\
 norm = plt.Normalize(0, 100)
 
 """
-This draws the main figure we try to build in this Python script.  The arguments
-are:
-lons    - list of longitudes
-lats    - list of latitudes
-alts    - list of altitudes
-_c      - list of arguments w/ which to colorize the (lon, lat, alt) points
-_cm     - color scale, indexed by _c
-name    - name of the input data source, e.g., "Echoflight"
-mindate - minimum date/time-stamp of the data
-maxdate - maximum date/time-stamp of the data
+This draws the main figure we try to build in this Python script.  
+The arguments are:
+
+	lons    - list of longitudes
+	lats    - list of latitudes
+	alts    - list of altitudes
+	_c      - list of arguments w/ which to colorize the (lon, lat, alt) points
+	_cm     - color scale, indexed by _c
+	name    - name of the input data source, e.g., "Echoflight"
+	mindate - minimum date/time-stamp of the data
+	maxdate - maximum date/time-stamp of the data
 """
-def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate, rcvrs=None):
+def draw_map_figure(
+	lons, lats, alts, _c, _cm, name, mindate, maxdate, rcvrs=None):
+
 	max_lat = max(lats)
 	min_lat = min(lats)
 	max_lon = max(lons)
 	min_lon = min(lons)
-	fig = plt.figure()
+	fig     = plt.figure()
+	
 	fig.suptitle(name + " " + str(mindate) + " to " + str(maxdate))
+	
 	ax = fig.gca(projection='3d')
+	
 	bm = Basemap(
 		llcrnrlon=min_lon, 
 		llcrnrlat=min_lat,
@@ -65,30 +71,37 @@ def draw_map_figure(lons, lats, alts, _c, _cm, name, mindate, maxdate, rcvrs=Non
         resolution='l', 
         fix_aspect=False, 
         ax=ax) 
+	
 	ax.view_init(azim=230, elev=50)
 	ax.set_xlabel('Longitude (°E)', labelpad=20)
 	ax.set_ylabel('Latitude (°N)' , labelpad=20)
 	ax.set_zlabel('Altitude (m)'  , labelpad=20)
+	
 	meridians = sorted(
 					list(
 						set(np.arange(min_lon, 
 							          max_lon, 
 							          (max_lon - min_lon) / 5))\
 	            		.union({ min_lon, max_lon })))
+	
 	parallels = sorted(
 					list(
 						set(np.arange(min_lat, 
 									  max_lat, 
 									  (max_lat - min_lat) / 5))\
 						.union({ min_lat, max_lat })))
-	ax.set_yticks(parallels)
+	
+	ax.set_yticks     (parallels)
 	ax.set_yticklabels(parallels)
-	ax.set_xticks(meridians)
+	ax.set_xticks     (meridians)
 	ax.set_xticklabels(meridians)
+	
 	lon_formatter = LongitudeFormatter(zero_direction_label=True)
-	lat_formatter = LatitudeFormatter()
+	lat_formatter = LatitudeFormatter ()
+	
 	ax.xaxis.set_major_formatter(lon_formatter)
 	ax.yaxis.set_major_formatter(lat_formatter)
+	
 	ax.tick_params(axis='x', which='major', pad=10)
 	ax.tick_params(axis='y', which='major', pad=10)
 
@@ -247,7 +260,9 @@ def draw_3dmap(block_of_radar_points, \
 		]
 
 		print("\tDistance(truth, radar)")
-		metrics_string = str(tabulate(metrics, ["metric", "value"], tablefmt="fancy_grid"))
+		metrics_string = str(tabulate(metrics, 
+			                          ["metric", "value"], 
+			                          tablefmt="fancy_grid"))
 		print(metrics_string)
 		metrics_table = metrics
 
@@ -338,6 +353,123 @@ def create_automated_report(rows_in_report):
 						 	+ "\n"
 			if tab != None:
 				report_text += "\n### Metrics\n"
-				report_text += str(tabulate(tab, ["Metric", "Value"], tablefmt="pipe"))
+				report_text += str(tabulate(tab, 
+					                        ["Metric", "Value"], 
+					                        tablefmt="pipe"))
+
 	with open("AutomatedReport.md", "w") as fw:
 		fw.write(report_text)
+
+"""
+--------------------- Code for graphing matplotlib vectors ---------------------
+"""
+
+"""
+plot_vector 
+Adapted some code from: https://stackoverflow.com/questions/27023068/plotting-
+                        3d-vectors-using-python-matplotlib
+Input must be in the form of:
+	vector = np.array([[x, y, z, u, v, w], ...])
+	ax = an axis object made normally by:
+	ax = fig.add_subplot(111, projection='3d')
+"""
+def plot_vectors(vector, ax, color='b'):
+	x, y, z, u, v, w = zip(*vector)
+	ax.quiver(x, y, z, u, v, w, color=color)
+	max_len = max(np.abs(vector.flatten()))
+	ax.set_xlim([-max_len, max_len])
+	ax.set_ylim([-max_len, max_len])
+	ax.set_zlim([-max_len, max_len])
+
+
+def plot_vector_setup():
+	ax = plt.figure().add_subplot(projection='3d')
+	ax.set_box_aspect([1, 1, 1])
+	ax.set_xlabel('e')
+	ax.set_ylabel('n')
+	ax.set_zlabel('u')
+	return ax
+
+
+
+
+def plot_radar_fov_indicators(radar_position, fov, physical, ax):
+	# Make base vector for radar
+	radar_orientation \
+		= Rotation.from_euler('ZXY',
+		                      [-physical.heading, physical.pitch, 0], 
+		                      degrees=True)
+	
+	radar_range_base_vector = np.array([0, fov.range, 0])
+	radar_FoV_center_vector = radar_orientation.apply(radar_range_base_vector)
+	
+	# Make vectors for BR, TR, BL, TL
+	BR_rot = Rotation.from_euler('ZXY', 
+		                         [
+		                         	-physical.heading - fov.AzMax, 
+		                           	 physical.pitch   + fov.ElMin, 
+		                             0
+		                         ], 
+		                         degrees=True)
+
+	BR = BR_rot.apply(radar_range_base_vector)
+	
+	TR_rot = Rotation.from_euler('ZXY', 
+		                         [
+		                         	-physical.heading - fov.AzMax, 
+		                         	 physical.pitch   + fov.ElMax, 
+		                         	 0
+		                         ], 
+		                         degrees=True)
+	
+	TR = TR_rot.apply(radar_range_base_vector)
+
+	BL_rot = Rotation.from_euler('ZXY', 
+		                         [
+		                         	-physical.heading - fov.AzMin, 
+		                         	 physical.pitch   + fov.ElMin, 
+		                         	 0
+		                         ], 
+		                         degrees=True)
+	
+	BL = BL_rot.apply(radar_range_base_vector)
+	
+	TL_rot = Rotation.from_euler('ZXY', 
+		                         [
+		                         	-physical.heading - fov.AzMin, 
+		                         	 physical.pitch   + fov.ElMax, 
+		                         	 0
+		                         ], 
+		                         degrees=True)
+	
+	TL = TL_rot.apply(radar_range_base_vector)
+
+	# Rotate by roll amount about the base vector for roll to show
+	# TODO: Test this more with real data, make sure roll direction is correct
+	
+	roll_radians = np.radians(physical.roll)
+	
+	radar_FoV_center_vector_norm = radar_FoV_center_vector \
+	                             / np.linalg.norm(radar_FoV_center_vector)
+	
+	roll_rot = Rotation.from_rotvec(radar_FoV_center_vector_norm * roll_radians)
+	
+	BR, TR, BL, TL = roll_rot.apply([BR, TR, BL, TL])
+
+	# breakout and compose into vectors
+	uBR, vBR, wBR = BR
+	uTR, vTR, wTR = TR
+	uBL, vBL, wBL = BL
+	uTL, vTL, wTL = TL
+
+	x, y, z = radar_position
+
+	vectors = np.array([[x,y,z, uBR, vBR, wBR], \
+		                [x,y,z, uTR, vTR, wTR], \
+		                [x,y,z, uBL, vBL, wBL], \
+		                [x,y,z, uTL, vTL, wTL]])
+
+	""", [x,y,z, uBL, vBL, wBL], [x,y,z, uTL, vTL, wTL]"""
+
+	# plot the vectors
+	plot_vectors(vectors, ax, color='r')

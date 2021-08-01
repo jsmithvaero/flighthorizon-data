@@ -4,19 +4,10 @@ from datetime    import datetime
 
 import json
 
-from src.Data import Data
+from src.Data  import Data
+from src.Point import Point
 
 class TruthData(Data):
-
-	# Should return the current format
-	def getFormat(self):
-		ret = OrderedDict()
-		ret["filename" ] = "file"
-		ret["time"     ] = "datetime"
-		ret["latitude" ] = "degree"
-		ret["longitude"] = "degree"
-		ret["altitude" ] = "meter"
-		return ret
 
 	def quickStats(self):
 		return "Truth Data Quick Stats : [ " \
@@ -24,14 +15,11 @@ class TruthData(Data):
 
 	# EXTRA FUNCTIONALITY ABOVE DATA CLASS
 	def union(self, otherTruth):
-		
-		assert(self.getFormat() == otherTruth.getFormat())
-		
+				
 		new_points = self.points.union(otherTruth.getPoints())
 
 		return TruthData(folder=None, points=new_points)
 		
-
 """
 ADSB
 """
@@ -64,7 +52,13 @@ def getADSBpoints(adsb_file_name):
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%SZ")
 			if (lat, lon) != (0.0, 0.0):
-				points.append((adsb_file_name, time, lat, lon, alt))
+				p           = Point()
+				p.stamp     = time
+				p.latitude  = lat
+				p.longitude = lon
+				p.altitude  = alt
+				points.append(p)
+
 	return points
 
 """
@@ -93,12 +87,17 @@ def getNMEApoints(nmea_file_name, date):
 	with open(nmea_file_name, "r", encoding='utf-8') as fr:
 		for line in fr:
 			try:
-				msg = pynmea2.parse(line)
-				lat = msg.latitude
-				lon = msg.longitude
-				alt = msg.altitude
-				time = datetime.combine(date, msg.timestamp)
-				points.add((nmea_file_name, time, lat, lon, alt))
+				p = Point()
+
+				msg  = pynmea2.parse(line)
+				
+				p.latitude  = msg.latitude
+				p.longitude = msg.longitude
+				p.altitude  = msg.altitude
+				p.stamp     = datetime.combine(date, msg.timestamp)
+				
+				points.add(p)
+
 			except:
 				# who cares :D
 				continue
@@ -161,7 +160,17 @@ def getGPXpoints(gpx_file_name):
 
 			if (lat != None and lon != None and ele != None and time != None):
 
-				points.add((gpx_file_name, time, lat, lon, ele))
+				p = Point()
+
+				p.stamp     = time
+				p.latitude  = lat
+				p.longitude = lon
+				p.altitude  = ele 
+				
+				# ^ review this; is the elevation the same as altitude? TODO
+
+				points.add(p)
+
 				lat, lon, ele, time = None, None, None, None
 
 	return points
@@ -200,7 +209,15 @@ def getMavlinkPoints(mavlink_file_name):
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%SZ")
 			if (lat, lon, alt) != (0.0, 0.0, 0.0):
-				points.append((mavlink_file_name, time, lat, lon, alt))
+				p = Point()
+
+				p.stamp     = time
+				p.latitude  = lat
+				p.longitude = lon
+				p.altitude  = alt
+
+				points.append(p)
+
 	return points
 
 def fixBrokenMavlinkCoords(coord):

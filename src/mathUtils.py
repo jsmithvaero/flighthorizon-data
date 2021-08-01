@@ -1,37 +1,62 @@
 """
 file    : mathUtils.py
-author  : Max von Hippel
+author  : Max von Hippel and Levi Purdy
 authored: 4 July 2021
 purpose : Mathematical utilities used in other scripts.
 """
 import math
+import json
 
 from datetime import datetime
+
+
+allowed_hoz_deviation = 10 # meters
+allowed_vertical_deviation = 10 # meters
+allowed_time_deviation = 15 # seconds
 
 """
 The purpose of this function is to check if there is any truth data within
 a spatio-temporal bubble (1 minute, 10 meters hoz, 10 meters vertical) of the
 given radar point.  We can use this as a kind of simple "validity" check for 
 radar data, although it is obviously imperfect.
+
+This is Levi: 
+I have added settings for allowed deviations, refer to above for values.
 """
 def PAC(time, lat, lon, alt, truth):
-	for (file_truth, time_truth, lat_truth, lon_truth, alt_truth) in truth:
+	
+	for truth_point in truth:	
 		
-		if None == file_truth or \
-		   None == time_truth or \
-		   None == lat_truth  or \
-		   None == lon_truth  or \
-		   None == alt_truth:
-		   print(file_truth, time_truth, lat_truth, lon_truth, alt_truth)
+		if None == truth_point.stamp     or \
+		   None == truth_point.latitude  or \
+		   None == truth_point.longitude or \
+		   None == truth_point.altitude:
+
+		   print(json.dumps(truth_point.__dict__))
+
 		   return False
 
-		if ((time_truth - time).total_seconds() <= 60):
+		time_diff = (truth_point.stamp - time).total_seconds()
+		
+		if (time_diff >= allowed_time_deviation):
 			continue
-		if (distanceKM(lat_truth, lon_truth, lat, lon) / 1000) < 10:
+		
+		distance_meters = distanceKM(truth_point.latitude, 
+		                             truth_point.longitude, 
+		                             lat, 
+		                             lon) * 1000 
+		# Changed this from / to * because converting from Km to m
+		
+		if distance_meters > allowed_hoz_deviation:
 			continue
-		if (abs(alt - alt_truth) < 10):
+		
+		distance_alt = abs(alt - truth_point.altitude)
+		
+		if (distance_alt > allowed_vertical_deviation):
 			continue
+		
 		return True
+	
 	return False
 
 def targetBearing(_azimuth, _radar_orientation):
