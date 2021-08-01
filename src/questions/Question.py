@@ -18,11 +18,11 @@ class Question:
 
 	def __init__(self, timestamped_X=None, \
 		               timestamped_Y=None, \
-		               X_parser=None,      \
-		               Y_parser=None,      \
-		               BLOCK=None,         \
-		               X_axis_name=None,   \
-		               Y_axis_name=None):
+		               X_parser     =None, \
+		               Y_parser     =None, \
+		               BLOCK        =None, \
+		               X_axis_name  =None, \
+		               Y_axis_name  =None):
 		
 		if timestamped_X != None:
 			self.timestamped_X = timestamped_X
@@ -31,6 +31,7 @@ class Question:
 			self.timestamped_X = X_parser(BLOCK)
 
 		else:
+			print("Ill-defined question!")
 			assert(False) # ERROR! Ill-defined question.
 		
 		if timestamped_Y != None:
@@ -40,6 +41,7 @@ class Question:
 			self.timestamped_Y = Y_parser(BLOCK)
 
 		else:
+			print("Ill-defined question!")
 			assert(False) # ERROR! Ill-defined question.
 
 		self.removeIsolatedPoints()
@@ -66,7 +68,7 @@ class Question:
 			print("self.timestamped_X had size " + str(len(self.timestamped_X)))
 
 			self.timestamped_X = [ (s, x) for 
-			                       (s, x) in self.timestamped_X 
+			                       (s, x) in self.c 
 			                              if inRange(s) ]
 
 			print("Now, self.timestamped_X has size " 
@@ -83,9 +85,18 @@ class Question:
 
 		except Exception as e:
 
-			print("self.timestamped_X = ", self.timestamped_X)
-			print("self.timestamped_Y = ", self.timestamped_Y)
+			print("-----------------------------------------------------------")
 			print("exception = ", e)
+			if len(self.timestamped_X) == 0:
+				print("Empty timestamped_X")
+			elif self.timestamped_X == None:
+				print("timestamped_X is None")
+			if len(self.timestamped_Y) == 0:
+				print("Empty timestamped_Y")
+			elif self.timestamped_Y == None:
+				print("timestamped_Y is None")
+			print("===========================================================")
+
 
 	def isNonTrivial(self):
 		return self.timestamped_X != None  and \
@@ -152,7 +163,7 @@ class Question:
 
 			if not os.path.isdir(datedir):
 				os.mkdir(datedir)
-				
+
 			plt.savefig(datedir + "/" + title.replace(" " , "_")\
 				                             .replace(":" , ".")\
 				                             .replace("/" , ".")\
