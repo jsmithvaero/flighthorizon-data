@@ -84,21 +84,29 @@ OUTPUT: the location (lat,    lon,    alt,   ori   ) in units of
         of the RADAR, if we can determine it; else None
 """
 def getRadarConfigLocation(radar_file_name):
+	
 	radar_config_file_name = radar_file_name.replace(".log", "_config.log")
+	
 	lat, lon, alt, ori = None, None, None, None
+	
 	try:
 		with open(radar_config_file_name, "r") as fr:
+			
 			stuff = json.loads(fr.read())
-			lon = stuff["receiver"]["longitude"]["value"]
-			lat = stuff["receiver"]["latitude"]["value"]
-			alt = stuff["receiver"]["elevation"]["value"]
-			ori = stuff["receiver"]["orientation"]["value"]
-			# == changed to in because running environment was adding a random special character
-			assert("°" in stuff["receiver"]["longitude"]["unit"])
-			assert("°" in stuff["receiver"]["latitude"]["unit"])
-			assert("m" in stuff["receiver"]["elevation"]["unit"])
+			lon   = stuff["receiver"]["longitude"  ]["value"]
+			lat   = stuff["receiver"]["latitude"   ]["value"]
+			alt   = stuff["receiver"]["elevation"  ]["value"]
+			ori   = stuff["receiver"]["orientation"]["value"]
+			
+			# Check membership instead of equality due to peculiarities of
+			# Windows encoding.
+			assert("°" in stuff["receiver"]["longitude"  ]["unit"])
+			assert("°" in stuff["receiver"]["latitude"   ]["unit"])
+			assert("m" in stuff["receiver"]["elevation"  ]["unit"])
 			assert("°" in stuff["receiver"]["orientation"]["unit"])
+
 		return lat, lon, alt, ori
+	
 	except Exception as e:
 		return None
 
@@ -132,6 +140,7 @@ def getRadarPoints(radar_file_name):
 			except:
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%SZ")
+			
 			conf = entry["confidenceLevel"]
 			
 			p                  = Point()
@@ -175,26 +184,28 @@ def get_radar_fov(radar_log_file):
 
 
 def get_radar_physical(radar_log_file):
+	
 	physical = Point()
 
-	if 'src' in os.path.dirname(__file__):
-		lat, lon, alt, ori = getRadarConfigLocation('..\\' + radar_log_file)
-	else:
-		lat, lon, alt, ori = getRadarConfigLocation(radar_log_file)
+	lat, lon, alt, ori = getRadarConfigLocation('..\\' + radar_log_file) \
+	                   if 'src' in os.path.dirname(__file__) else        \
+	                   getRadarConfigLocation(radar_log_file)
 
-	physical.lat = lat
-	physical.lon = lon
-	physical.alt = alt
+	physical.lat     = lat
+	physical.lon     = lon
+	physical.alt     = alt
 	physical.heading = ori
 
-	physical.latUnit = "degree"
-	physical.lonUnit = "degree"
-	physical.altUnit = "meter"
+	physical.latUnit     = "degree"
+	physical.lonUnit     = "degree"
+	physical.altUnit     = "meter"
 	physical.headingUnit = "degree"
 
-	# Temporary values for Testing, should be replaced with some refrence system to RadarConfig_*.json stuff
+	# Temporary values for Testing, should be replaced with some refrence system
+	# to RadarConfig_*.json stuff
+
 	physical.pitch = 0
-	physical.roll = 0
+	physical.roll  = 0
 
 	physical.pitchUnit = "degree"
 	physical.pitchUnit = "degree"
@@ -222,23 +233,39 @@ def is_point_in_fov(
 
 	# Setup variables
 	
-	time, conf, lat, lon, alt, dist, velVert, velX, velY, az, el, rn, radar_log_file = _range
+	time,        \
+		conf,    \
+		lat,     \
+		lon,     \
+		alt,     \
+		dist,    \
+		velVert, \
+		velX,    \
+		velY,    \
+		az,      \
+		el,      \
+		rn,      \
+		radar_log_file = _range
 	
-	fov = get_radar_fov(radar_log_file)
+	fov      = get_radar_fov     (radar_log_file)
 	physical = get_radar_physical(radar_log_file)
 	
 	return_object = Point()
 
 	truthTime, truthLat, truthLon, truthAlt = testTruth
+	
 	# Using the radar's location as 0,0,0 (optional) in enu coordinates 
 	# translate the plane's lat, lon, alt into enu
 	# e:East n:North u:Up
+	
 	if useRadarAsCenter:
+	
 		centerLat = physical.lat
 		centerLon = physical.lon
 		centerAlt = physical.alt
 
 	if useRangeAsTrue:
+	
 		truthLat = lat
 		truthLon = lon
 		truthAlt = alt
@@ -293,7 +320,9 @@ def is_point_in_fov(
 		radar_range_base_vector = np.array([0, fov.range, 0])
 		
 		# This creates v2 (the center fov vector of the radar)
-		radar_FoV_center_vector = radar_orientation.apply(radar_range_base_vector)
+		radar_FoV_center_vector \
+			= radar_orientation.apply(radar_range_base_vector)
+		
 		v2 = radar_FoV_center_vector
 		
 		# Maybe rotate vector v1 by the frame of the radar's rotation
@@ -303,55 +332,66 @@ def is_point_in_fov(
 		
 		roll_radians = np.radians(-physical.roll)
 		
-		radar_FoV_center_vector_norm = radar_FoV_center_vector / np.linalg.norm(radar_FoV_center_vector)
+		radar_FoV_center_vector_norm \
+			= radar_FoV_center_vector / np.linalg.norm(radar_FoV_center_vector)
 		
-		radar_roll_rot = Rotation.from_rotvec(radar_FoV_center_vector_norm * roll_radians)
+		radar_roll_rot \
+			= Rotation.from_rotvec(radar_FoV_center_vector_norm * roll_radians)
 		
 		v1_rot = radar_roll_rot.apply(v1)
 
 		if generate_debug_graph:
-			# Setup some optional test plots to check and make sure the vectors are working correctly
-			# https://stackoverflow.com/questions/27023068/plotting-3d-vectors-using-python-matplotlib
+			
+			# Setup some optional test plots to check and make sure the vectors 
+			# are working correctly
+			# https://stackoverflow.com/questions/27023068/plotting-3d-vectors-
+			# using-python-matplotlib
+			
 			ax = plot_vector_setup()
 			u_1, v_1, w_1 = v1
 			u_2, v_2, w_2 = v2
 			x, y, z = radar_position
-			vectors = np.array([[x,y,z, u_1, v_1, w_1],[x,y,z, u_2, v_2, w_2]])
+			vectors = np.array([[x, y, z, u_1, v_1, w_1], \
+				                [x, y, z, u_2, v_2, w_2]])
+			
 			plot_radar_fov_indicators(radar_position, fov, physical, ax)
 			plot_vectors(vectors, ax)
 			plt.show()
 
 
 		# Normalize the vectors
-		norm_v1_rot = v1_rot/np.linalg.norm(v1_rot)
-		norm_v2 = v2/np.linalg.norm(v2)
+		norm_v1_rot = v1_rot / np.linalg.norm(v1_rot)
+		norm_v2     = v2     / np.linalg.norm(v2    )
 
 		# Find the angle between v1 and v2 vectors
 		v1_rot_xy = [norm_v1_rot[0], norm_v1_rot[1], 0]
-		v2_rot_xy = [norm_v2[0], norm_v2[1], 0]
-		x1, y1 = np.linalg.norm(np.cross(v1_rot_xy, v2_rot_xy)), np.dot(v1_rot_xy, v2_rot_xy)
-		relative_heading_angle = np.degrees(np.arctan2(x1, y1))
-		relative_elevation_angle = np.degrees(np.arcsin(norm_v1_rot[2] - norm_v2[2]))
+		v2_rot_xy = [norm_v2[0]    , norm_v2[1]    , 0]
+		
+		x1, y1 = np.linalg.norm(np.cross(v1_rot_xy, v2_rot_xy)), \
+		                        np.dot  (v1_rot_xy, v2_rot_xy)
+		
+		relative_heading_angle   = np.degrees(np.arctan2(x1, y1))
+		
+		relative_elevation_angle = np.degrees(np.arcsin(norm_v1_rot[2] - \
+			                                            norm_v2[2]))
 
 		# Compare the angle between them and check if they are out of range
 
-		return_object.relative_heading = relative_heading_angle
+		return_object.relative_heading   = relative_heading_angle
 		return_object.relative_elevation = relative_elevation_angle
 
-		if (relative_heading_angle > fov.AzMin and relative_heading_angle < fov.AzMax):
-			return_object.is_in_heading = True
-		else:
-			return_object.is_in_heading = False
+		return_object.is_in_heading \
+			= (relative_heading_angle > fov.AzMin and \
+			   relative_heading_angle < fov.AzMax)
 
-		if (relative_elevation_angle > fov.ElMin and relative_elevation_angle < fov.ElMax):
-			return_object.is_in_elevation = True
-		else:
-			return_object.is_in_elevation = False
+		return_object.is_in_elevation \
+			= (relative_elevation_angle > fov.ElMin and \
+			   relative_elevation_angle < fov.ElMax)
 
-		if return_object.is_in_range and return_object.is_in_heading and return_object.is_in_elevation:
-			return_object.is_in_fov = True
-		else:
-			return_object.is_in_fov = False
+		return_object.is_in_fov \
+			= (return_object.is_in_range   and \
+		       return_object.is_in_heading and \
+		       return_object.is_in_elevation)
 
 		return return_object
 	else:

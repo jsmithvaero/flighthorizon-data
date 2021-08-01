@@ -1,3 +1,8 @@
+"""
+file   : blocks.py
+author : Max von Hippel
+purpose: Split data into temporal blocks (ie encounters)
+"""
 from src.mathUtils import PAC
 
 def blockSplitTimeIndexedData(data):
@@ -20,7 +25,9 @@ def radarTruthBlocks(radar_data, truth_data):
 
 	for radar_file_name in radar_data:
 
-		radar_file_blocks = blockSplitTimeIndexedData(radar_data[radar_file_name])
+		radar_file_blocks = blockSplitTimeIndexedData(\
+			                    radar_data[radar_file_name])
+		
 		truth_file_blocks = []
 
 		for radar_block in radar_file_blocks:

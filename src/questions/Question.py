@@ -146,9 +146,13 @@ class Question:
 		plt.ylabel (yAx                 )
 		plt.scatter(regular_X, regular_Y)
 		if save == True:
-			datedir = datestr.replace("/", ".").replace(" ", "_").replace(":", ".")
+			datedir = datestr.replace("/", ".")\
+			                 .replace(" ", "_")\
+			                 .replace(":", ".")
+
 			if not os.path.isdir(datedir):
 				os.mkdir(datedir)
+				
 			plt.savefig(datedir + "/" + title.replace(" " , "_")\
 				                             .replace(":" , ".")\
 				                             .replace("/" , ".")\

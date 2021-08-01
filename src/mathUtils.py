@@ -1,10 +1,8 @@
 """
 file    : mathUtils.py
-author  : Max von Hippel
+author  : Max von Hippel and Levi Purdy
 authored: 4 July 2021
 purpose : Mathematical utilities used in other scripts.
-
-edited by: Levi Purdy
 """
 import math
 import json
@@ -26,7 +24,9 @@ This is Levi:
 I have added settings for allowed deviations, refer to above for values.
 """
 def PAC(time, lat, lon, alt, truth):
+	
 	for truth_point in truth:	
+		
 		if None == truth_point.stamp     or \
 		   None == truth_point.latitude  or \
 		   None == truth_point.longitude or \
@@ -37,15 +37,26 @@ def PAC(time, lat, lon, alt, truth):
 		   return False
 
 		time_diff = (truth_point.stamp - time).total_seconds()
+		
 		if (time_diff >= allowed_time_deviation):
 			continue
-		distance_meters = distanceKM(truth_point.latitude, truth_point.longitude, lat, lon) * 1000 # Changed this from / to * because converting from Km to m
+		
+		distance_meters = distanceKM(truth_point.latitude, 
+		                             truth_point.longitude, 
+		                             lat, 
+		                             lon) * 1000 
+		# Changed this from / to * because converting from Km to m
+		
 		if distance_meters > allowed_hoz_deviation:
 			continue
+		
 		distance_alt = abs(alt - truth_point.altitude)
+		
 		if (distance_alt > allowed_vertical_deviation):
 			continue
+		
 		return True
+	
 	return False
 
 def targetBearing(_azimuth, _radar_orientation):
