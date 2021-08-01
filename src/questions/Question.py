@@ -4,12 +4,11 @@ author  : Max von Hippel
 authored: 4 July 2021
 purpose : To answer questions about the data.
 """
-import traces
-import pandas
+import pandas            as pd
+import matplotlib        as mpl
 import matplotlib.pyplot as plt
 import os
-
-from src.mathUtils import PAC
+from   src.mathUtils     import PAC
 
 class Question:
 
@@ -44,7 +43,8 @@ class Question:
 			print("Ill-defined question!")
 			assert(False) # ERROR! Ill-defined question.
 
-		self.removeIsolatedPoints()
+		if self.isNonTrivial():
+			self.removeIsolatedPoints()
 
 		self.X_axis_name = X_axis_name
 		self.Y_axis_name = Y_axis_name
@@ -68,7 +68,7 @@ class Question:
 			print("self.timestamped_X had size " + str(len(self.timestamped_X)))
 
 			self.timestamped_X = [ (s, x) for 
-			                       (s, x) in self.c 
+			                       (s, x) in self.timestamped_X 
 			                              if inRange(s) ]
 
 			print("Now, self.timestamped_X has size " 
@@ -111,40 +111,46 @@ class Question:
 	There will be three kinds of points: X_interplated, Y_interplated, and
 	XY_original.
 	"""
-	def plotXY(self, regularizationSize=10, save=False):
+	def plotXY(self, save=False):
 
-		print("\nCalling plotXY(regularizationSize=" 
-			  + str(regularizationSize)
-			  + ").  REMEMBER: This method utilizes a moving average."
-			  + " Therefore, it may mis-represent data containing more than"
-			  + " one simultaneous trend, e.g., data tracking two aircraft "
-			  + " at the same time.  For such data, you should come up with"
-			  + " some alternative approach, e.g. you might split into "
-			  + " individual trends ahead of time.\n")
-
-		X_ts = traces.TimeSeries()
-		Y_ts = traces.TimeSeries()
-
-		for (stamp, x) in self.timestamped_X:
-			X_ts[stamp] = x
-
-		for (stamp, y) in self.timestamped_Y:
-			Y_ts[stamp] = y
-
-		regular_X = X_ts.moving_average(regularizationSize, pandas=True)
-		regular_Y = Y_ts.moving_average(regularizationSize, pandas=True)
-
-		xAx = "Unknown X" if self.X_axis_name == None else self.X_axis_name
-		yAx = "Unknown Y" if self.Y_axis_name == None else self.Y_axis_name
-
-		title  = xAx + " versus " + yAx + "\n"
-		
 		allStamps = set([s for (s, _) in self.timestamped_X]).union(
 				    set([s for (s, _) in self.timestamped_Y])
 		)
 
-		datestr = str(min(allStamps)) + " to " + str(max(allStamps))
-		title += datestr
+		minStamp = min(allStamps)
+		maxStamp = max(allStamps)
+
+		datestr = str(minStamp) + " to " + str(maxStamp)
+
+		allStamps = sorted(list(set([s for (s, _) in self.timestamped_X]).union(
+			set([s for (s, _) in self.timestamped_Y]))))
+
+		X_ts = pd.Series(
+			data={ k : v for (k, v) in self.timestamped_X },
+			index=allStamps).interpolate()
+
+		Y_ts = pd.Series(
+			data={ k : v for (k, v) in self.timestamped_Y },
+			index=allStamps).interpolate()
+
+		def colored(k):
+			matching_X = len([t for (t, _) in self.timestamped_X if t == k])
+			matching_Y = len([t for (t, _) in self.timestamped_Y if t == k])
+			if matching_X > 0:
+				if matching_Y > 0:
+					return 'green'
+				return 'blue'
+			assert(matching_Y > 0)
+			return 'red'
+
+		colors = pd.Series(
+			data={ k : colored(k) for k in allStamps },
+			index=allStamps)
+
+		xAx = "Unknown X" if self.X_axis_name == None else self.X_axis_name
+		yAx = "Unknown Y" if self.Y_axis_name == None else self.Y_axis_name
+
+		title  = xAx + " versus " + yAx + "\n" + datestr
 
 		# For more complex plots we should be using fig = plt.figure(), 
 		# but just adding plt.clf() is a simple solution
@@ -152,10 +158,14 @@ class Question:
 		#fig = plt.figure()
 		#ax = fig.add_subplot(1,1,1)
 
-		plt.title  (title + datestr     )
-		plt.xlabel (xAx                 )
-		plt.ylabel (yAx                 )
-		plt.scatter(regular_X, regular_Y)
+		plt.title  (title + datestr)
+		plt.xlabel (xAx            )
+		plt.ylabel (yAx            )
+		
+		plt.scatter(X_ts, 
+			        Y_ts, 
+			        c=colors)
+		
 		if save == True:
 			datedir = datestr.replace("/", ".")\
 			                 .replace(" ", "_")\

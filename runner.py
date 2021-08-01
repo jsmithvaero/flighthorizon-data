@@ -40,15 +40,17 @@ def main():
     BLOCKED_DATAS = [
         (RadarData(folder=None, points=radarBlock),
          TruthData(folder=None, points=truthBlock))
-        for (radarBlock, truthBlock)
-        in BLOCKS
+        
+        for (radarBlock, truthBlock) in BLOCKS
     ]
 
     # Remove singletons and empty sets.
     BLOCKED_DATAS = [
+        
         (RD, TD) for (RD, TD) in BLOCKED_DATAS
+        
         if RD.isNonTrivial(TRIVIAL_THRESHOLD) and
-        TD.isNonTrivial(TRIVIAL_THRESHOLD)
+           TD.isNonTrivial(TRIVIAL_THRESHOLD)
     ]
 
     # Finally, let's answer some questions, over the various blocks.
@@ -56,11 +58,14 @@ def main():
 
 
         for countI, (independent_parser, independent_name) in enumerate(INDEPENDENTS):
+            
             for countD, (dependent_parser, dependent_name) in enumerate(DEPENDENTS):
+                
                 if countI in args.independents and countD in args.dependents:
 
                     timestamped_INDEPENDENT = independent_parser(RD, TD)
-                    timestamped_DEPENDENT = dependent_parser(RD, TD)
+                    timestamped_DEPENDENT   = dependent_parser(RD, TD)
+                    
                     answer = Question(
                         timestamped_X=timestamped_INDEPENDENT,
                         timestamped_Y=timestamped_DEPENDENT,
