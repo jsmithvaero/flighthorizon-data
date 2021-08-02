@@ -20,6 +20,8 @@ from src.mathUtils        import targetBearing, targetPosition, distanceKM
 from src.genericDataUtils import getConfigName
 from src.plotGraphs       import *
 from src.Point            import Point
+from src.Physical         import Physical
+from src.FoV              import FoV
 
 class RadarData(Data):
 
@@ -166,7 +168,7 @@ def getRadarPoints(radar_file_name):
 # For now it will just return a generic radar fov for Echodyne GroundAware radars.
 def get_radar_fov(radar_log_file):
 
-	fov = Point()
+	fov = FoV()
 
 	fov.range     = 5000
 	fov.rangeUnit = "meter"
@@ -185,7 +187,7 @@ def get_radar_fov(radar_log_file):
 
 def get_radar_physical(radar_log_file):
 	
-	physical = Point()
+	physical = Physical()
 
 	lat, lon, alt, ori = getRadarConfigLocation('..\\' + radar_log_file) \
 	                   if 'src' in os.path.dirname(__file__) else        \
