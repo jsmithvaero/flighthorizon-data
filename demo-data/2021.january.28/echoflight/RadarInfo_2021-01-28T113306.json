@@ -1,0 +1,18 @@
+{
+    "radarInfo": [
+        {
+        },
+        {
+            "dV": 0.9086170196533203,
+            "fpgaVersion": "63AB",
+            "hpsVersion": "100.0.0.0.0",
+            "idn": "",
+            "nVelocities": 32,
+            "serialNumber": "00001"
+        },
+        {
+        },
+        {
+        }
+    ]
+}
