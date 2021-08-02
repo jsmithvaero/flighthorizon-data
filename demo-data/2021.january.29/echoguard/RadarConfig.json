@@ -1,0 +1,219 @@
+{
+    "dataPortEnable": {
+        "detection": false,
+        "measurement": true,
+        "rvmap": false,
+        "rvmapRadarNum": 1,
+        "status": true,
+        "track": true
+    },
+    "dataRecordEnable": {
+        "detection": false,
+        "masterRecord": true,
+        "measurement": true,
+        "recordingFolder": "../RadarData",
+        "rvmap": false,
+        "status": true,
+        "track": true
+    },
+    "display": {
+        "map": "EsriSatellite",
+        "metaDataMask": "23e",
+        "trackTailSec": 10
+    },
+    "fpgaVersion": "A1a",
+    "globalMasks": {
+        "clutterMaskWidth": 3,
+        "rcsMax": 100,
+        "rcsMin": -13
+    },
+    "radarConfigVersion": "1.6.0",
+    "radars": [
+        {
+            "additionalCmds": [
+            ],
+            "channel": {
+                "freqChannel": 2,
+                "tcmChannel": 0,
+                "tcmEnable": false
+            },
+            "fov": {
+                "fovAzMaxSearchDegree": 60,
+                "fovAzMaxTrackDegree": 60,
+                "fovAzMinSearchDegree": -60,
+                "fovAzMinTrackDegree": -60,
+                "fovAzStepDegree": 6,
+                "fovElMaxSearchDegree": 40,
+                "fovElMaxTrackDegree": 40,
+                "fovElMinSearchDegree": 0,
+                "fovElMinTrackDegree": -40,
+                "fovElStepDegree": 12,
+                "maxRangeMeter": 5000,
+                "minRangeMeter": 40
+            },
+            "general": {
+                "additionalCmdsEnable": false,
+                "ipAddress": "192.168.168.50",
+                "label": "west276",
+                "operationMode": 2,
+                "scriptPath": "C:/Users/UTM Manager/Desktop/Radars/EchoGuard_West_FC2_TC0.txt",
+                "selected": false
+            },
+            "physical": {
+                "altitudeMeter": 1,
+                "headingDegree": 0,
+                "latitude": 64.85758972167969,
+                "longitude": -147.85403442382812,
+                "pitchDegree": 14.399999618530273,
+                "rollDegree": -3.0999999046325684
+            },
+            "zoneMasks": [
+            ]
+        },
+        {
+            "additionalCmds": [
+            ],
+            "channel": {
+                "freqChannel": 0,
+                "tcmChannel": 0,
+                "tcmEnable": false
+            },
+            "fov": {
+                "fovAzMaxSearchDegree": 60,
+                "fovAzMaxTrackDegree": 60,
+                "fovAzMinSearchDegree": -60,
+                "fovAzMinTrackDegree": -60,
+                "fovAzStepDegree": 6,
+                "fovElMaxSearchDegree": 40,
+                "fovElMaxTrackDegree": 40,
+                "fovElMinSearchDegree": -12,
+                "fovElMinTrackDegree": -12,
+                "fovElStepDegree": 12,
+                "maxRangeMeter": 5000,
+                "minRangeMeter": 22
+            },
+            "general": {
+                "additionalCmdsEnable": false,
+                "ipAddress": "192.168.168.51",
+                "label": "east289",
+                "operationMode": 2,
+                "scriptPath": "C:/Users/UTM Manager/Desktop/Radars/EchoGuard_East_FC2_TC1.txt",
+                "selected": true
+            },
+            "physical": {
+                "altitudeMeter": 208,
+                "headingDegree": 59.5,
+                "latitude": 65.1262435913086,
+                "longitude": -147.4764862060547,
+                "pitchDegree": 0.10000000149011612,
+                "rollDegree": -0.10000000149011612
+            },
+            "zoneMasks": [
+            ]
+        },
+        {
+            "additionalCmds": [
+            ],
+            "channel": {
+                "freqChannel": 2,
+                "tcmChannel": 0,
+                "tcmEnable": false
+            },
+            "fov": {
+                "fovAzMaxSearchDegree": 46,
+                "fovAzMaxTrackDegree": 50,
+                "fovAzMinSearchDegree": -46,
+                "fovAzMinTrackDegree": -50,
+                "fovAzStepDegree": 6,
+                "fovElMaxSearchDegree": 40,
+                "fovElMaxTrackDegree": 40,
+                "fovElMinSearchDegree": 0,
+                "fovElMinTrackDegree": -20,
+                "fovElStepDegree": 12,
+                "maxRangeMeter": 5000,
+                "minRangeMeter": 40
+            },
+            "general": {
+                "additionalCmdsEnable": false,
+                "ipAddress": "192.168.168.6",
+                "label": "North250",
+                "operationMode": 1,
+                "scriptPath": "C:/Users/UTM Manager/Desktop/Radars/EchoFlight_North_FC0_TC0.txt",
+                "selected": false
+            },
+            "physical": {
+                "altitudeMeter": 1,
+                "headingDegree": 0,
+                "latitude": 64.85900115966797,
+                "longitude": -147.85052490234375,
+                "pitchDegree": 18.100000381469727,
+                "rollDegree": -1.399999976158142
+            },
+            "zoneMasks": [
+            ]
+        },
+        {
+            "additionalCmds": [
+            ],
+            "channel": {
+                "freqChannel": 2,
+                "tcmChannel": 1,
+                "tcmEnable": true
+            },
+            "fov": {
+                "fovAzMaxSearchDegree": 46,
+                "fovAzMaxTrackDegree": 50,
+                "fovAzMinSearchDegree": -46,
+                "fovAzMinTrackDegree": -50,
+                "fovAzStepDegree": 6,
+                "fovElMaxSearchDegree": 40,
+                "fovElMaxTrackDegree": 40,
+                "fovElMinSearchDegree": -10,
+                "fovElMinTrackDegree": -20,
+                "fovElStepDegree": 12,
+                "maxRangeMeter": 5000,
+                "minRangeMeter": 40
+            },
+            "general": {
+                "additionalCmdsEnable": false,
+                "ipAddress": "192.168.168.8",
+                "label": "south202",
+                "operationMode": 1,
+                "scriptPath": "C:/Users/UTM Manager/Desktop/Radars/EchoFlight_South_FC0_TC1.txt",
+                "selected": false
+            },
+            "physical": {
+                "altitudeMeter": 1,
+                "headingDegree": 180,
+                "latitude": 64.85942077636719,
+                "longitude": -147.8505401611328,
+                "pitchDegree": 8.5,
+                "rollDegree": 0
+            },
+            "zoneMasks": [
+            ]
+        }
+    ],
+    "wayPoints": [
+        {
+            "label": "Operator",
+            "latitude": 65.1262435913086,
+            "longitude": -147.4764862060547
+        },
+        {
+            "label": "",
+            "latitude": 0,
+            "longitude": 0
+        },
+        {
+            "label": "",
+            "latitude": 0,
+            "longitude": 0
+        },
+        {
+            "label": "",
+            "latitude": 0,
+            "longitude": 0
+        }
+    ]
+}

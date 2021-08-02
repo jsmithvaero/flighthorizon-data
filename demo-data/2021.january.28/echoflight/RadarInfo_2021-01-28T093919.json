@@ -1,0 +1,18 @@
+{
+    "radarInfo": [
+        {
+        },
+        {
+            "dV": 0.9101930260658264,
+            "fpgaVersion": "9516",
+            "hpsVersion": "21.7.D.1.0",
+            "idn": "ECHODYNE Corp. EchoGuard Radar\nCOUNTRY MODE: USA\nOPERATION MODE: Plane (with modifications)\nSerial Number: \"900289\"\n\nSW Suite: 16.2.0\n\nMCU Firmware version: 21.7.D.1.0 (33.1.0)\nMCU Firmware build date: Dec  7 2020 20:15:02\nFPGA Firmware version: 9516\nFPGA ID: A5\nFPGA Time Stamp: Sat Nov  7 21:48:34 2020\nHW CONFIG: BLOCK0\n\nPlease report issues to help@echodyne.com\nOK\r\n",
+            "nVelocities": 32,
+            "serialNumber": "900289"
+        },
+        {
+        },
+        {
+        }
+    ]
+}
