@@ -1,13 +1,18 @@
+"""
+file   : blocks.py
+author : Max von Hippel
+purpose: Split data into temporal blocks (ie encounters)
+"""
 from src.mathUtils import PAC
 
 def blockSplitTimeIndexedData(data):
-	sorted_data = sorted(data, key=lambda d : d[0])
+	sorted_data = sorted(data, key=lambda d : d.stamp)
 	blocks = [[sorted_data[0]]]
 	data_length = len(data)
 	for j in range(1, data_length):
 		
-		if ((sorted_data[j][0] - \
-			 sorted_data[j - 1][0]).total_seconds() / 60) > 10:
+		if ((sorted_data[j    ].stamp - \
+			 sorted_data[j - 1].stamp).total_seconds() / 60) > 10:
 
 			blocks.append([sorted_data[j]])
 		else:
@@ -20,18 +25,19 @@ def radarTruthBlocks(radar_data, truth_data):
 
 	for radar_file_name in radar_data:
 
-		radar_file_blocks = blockSplitTimeIndexedData(radar_data[radar_file_name])
+		radar_file_blocks = blockSplitTimeIndexedData(\
+			                    radar_data[radar_file_name])
+		
 		truth_file_blocks = []
 
 		for radar_block in radar_file_blocks:
 
-			mintime = radar_block[ 0][0]
-			maxtime = radar_block[-1][0]
+			mintime = radar_block[ 0].stamp
+			maxtime = radar_block[-1].stamp
 
 			truth_block = [
-				(time, lat, lon, alt) for
-				(time, lat, lon, alt) in truth_data
-				if ((mintime <= time) and (time <= maxtime))
+				p for p in truth_data
+				if ((mintime <= p.stamp) and (p.stamp <= maxtime))
 			]
 
 			BLOCKS.append((radar_block, truth_block))
@@ -44,13 +50,18 @@ def flattenedRadarTruthBlock(radar_truth_block):
 	(radar_block, truth_block) = radar_truth_block
 
 	flattened_block = [
-		(time, conf, lat, lon, alt, dist, PAC(time, 
-			                                  lat, 
-			                                  lon, 
-			                                  alt, 
-			                                  truth_block))
-	    for (time, conf, lat, lon, alt, dist)
-	    in radar_block
+		(point.stamp, 
+		 point.confidence, 
+		 point.latitude, 
+		 point.longitude, 
+		 point.altitude, 
+		 point.distance, 
+		 PAC(point.stamp, 
+			 point.latitude, 
+			 point.longitude, 
+			 point.altitude, 
+			 truth_block))
+	    for point in radar_block
 	]
 
 	return flattened_block
