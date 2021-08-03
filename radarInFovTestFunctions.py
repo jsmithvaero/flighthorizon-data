@@ -6,6 +6,7 @@ purpose : Test functions for radar in FoV functions
 """
 
 from src.radarData import *
+from src.Point import Point
 import datetime
 
 
@@ -28,6 +29,8 @@ def main():
     is_fov = is_point_in_fov(testRange2, testTruth, useRangeAsTrue=True, generate_debug_graph=True)
 
     print(is_fov.is_in_fov)
+
+
 
 
 if __name__ == "__main__":

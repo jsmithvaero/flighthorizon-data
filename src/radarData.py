@@ -8,11 +8,15 @@ import json
 import math
 import pymap3d
 import numpy as np
+import glob
+import dateutil.parser
+import os
 
 from scipy.spatial.transform import Rotation
 
 from collections import OrderedDict
 from datetime    import datetime
+from datetime    import timedelta
 
 from src.Data             import Data
 from glob                 import glob
@@ -162,6 +166,77 @@ def getRadarPoints(radar_file_name):
 			points.append(p)
 
 	return points
+"""
+Function to find the first timestamp in a _radar.log file.
+This is here because the filename uses 12 hr format, but does not specify AM or PM,
+so the point in the file with a valid timestamp should be used instead.
+
+Adapted code from getRadarPoints
+"""
+def get_first_timestamp_in_radarLog(radar_file_name):
+	with open(radar_file_name, "r") as fr:
+		stuff = json.loads(fr.read())
+		for entry in stuff:
+			try:
+				time = datetime.strptime(entry["timeStamp"], \
+										 "%Y-%m-%dT%H:%M:%S.%fZ")
+			except:
+				time = datetime.strptime(entry["timeStamp"], \
+										 "%Y-%m-%dT%H:%M:%SZ")
+
+			return time
+"""
+Find radar config file. Given a radar Point will find the closest timestamped echogarud RadarConfig file and return the name
+Sources:
+https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
+
+https://stackoverflow.com/questions/12141150/from-list-of-integers-get-number-closest-to-a-given-value
+
+Notes:
+RadarConfig_time_zone should be made to use datetime timezone info eventually
+
+use_filename_date off by default
+"""
+def find_RadarConfig(radar_point, RadarConfig_time_zone=timedelta(hours=-9), use_filename_date=False):
+	radar_log_file = ('..\\' + radar_point.src) \
+		if 'src' in os.path.dirname(__file__) else \
+		radar_point.src
+
+	# Parse datetime out of the radar_log_file
+	if use_filename_date:
+		radar_log_filename = os.path.basename(radar_log_file)
+		radar_log_datestring = radar_log_filename.split('_')[0]
+		log_date = dateutil.parser.isoparse(radar_log_datestring)
+	else:
+		log_date = get_first_timestamp_in_radarLog(radar_log_file)
+
+	# Get list of RadarConfig files
+	echoguard_folder = os.path.join(os.path.dirname(radar_log_file), 'echoguard')
+	echoguard_folder = ('..\\' + echoguard_folder) \
+		if 'src' in os.path.dirname(__file__) else \
+		echoguard_folder
+	filenames = next(os.walk(echoguard_folder), (None, None, []))[2]
+
+    date_list = {}
+
+	# Parse into a list of datetimes
+	for config_name in filenames:
+		if 'RadarConfig' in config_name:
+			date_string = config_name.split('_')[1].split('.')[0]
+			date = dateutil.parser.isoparse(date_string)-RadarConfig_time_zone
+			date_list.update({date: config_name})
+
+
+	# Find the closest *maybe prior* datetime and return the RadarConfig paths
+    closest_date = min(date_list, key=lambda date: abs(date - log_date))
+	radar_config_file = date_list.get(closest_date)
+
+	return os.join(echogaurd_folder, radar_config_file)
+
+"""
+
+"""
+
 
 # This function will be here for future implementations when a radar 
 # logfile can contain the orientation information
@@ -169,6 +244,8 @@ def getRadarPoints(radar_file_name):
 def get_radar_fov(radar_log_file):
 
 	fov = FoV()
+
+	RadarConfigFile = find_RadarConfig(radar_log_file)
 
 	fov.range     = 5000
 	fov.rangeUnit = "meter"
@@ -215,6 +292,7 @@ def get_radar_physical(radar_log_file):
 	return physical
 
 
+# TODO: update is_point_in_fov to use new Point datastructure
 # Tests if testTruth is in the FoV of a radar described by a range
 # Unless a breakpoint is set before plot_vectors(vectors, ax) 
 # generate_debug_graph will freeze the execution
