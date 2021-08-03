@@ -213,25 +213,24 @@ def find_RadarConfig(radar_point, RadarConfig_time_zone=timedelta(hours=-9), use
 	# Get list of RadarConfig files
 	echoguard_folder = os.path.join(os.path.dirname(radar_log_file), 'echoguard')
 	echoguard_folder = ('..\\' + echoguard_folder) \
-		if 'src' in os.path.dirname(__file__) else \
-		echoguard_folder
-	filenames = next(os.walk(echoguard_folder), (None, None, []))[2]
+				if 'src' in os.path.dirname(__file__) else \
+				echoguard_folder
+	radar_filenames = next(os.walk(echoguard_folder), (None, None, []))[2]
 
-    date_list = {}
+	date_list = {}
 
 	# Parse into a list of datetimes
-	for config_name in filenames:
+	for config_name in radar_filenames:
 		if 'RadarConfig' in config_name:
 			date_string = config_name.split('_')[1].split('.')[0]
 			date = dateutil.parser.isoparse(date_string)-RadarConfig_time_zone
 			date_list.update({date: config_name})
 
-
 	# Find the closest *maybe prior* datetime and return the RadarConfig paths
-    closest_date = min(date_list, key=lambda date: abs(date - log_date))
+	closest_date = min(date_list, key=lambda date: abs(date - log_date))
 	radar_config_file = date_list.get(closest_date)
 
-	return os.join(echogaurd_folder, radar_config_file)
+	return os.join(echoguard_folder, radar_config_file)
 
 """
 

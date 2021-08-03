@@ -53,27 +53,32 @@ def main():
            TD.isNonTrivial(TRIVIAL_THRESHOLD)
     ]
 
-    # Finally, let's answer some questions, over the various blocks.
-    for (RD, TD) in BLOCKED_DATAS:
+    if args.ttd:
 
 
-        for countI, (independent_parser, independent_name) in enumerate(INDEPENDENTS):
-            
-            for countD, (dependent_parser, dependent_name) in enumerate(DEPENDENTS):
-                
-                if countI in args.independents and countD in args.dependents:
+        pass
+    else:
+        # Finally, let's answer some questions, over the various blocks.
+        for (RD, TD) in BLOCKED_DATAS:
 
-                    timestamped_INDEPENDENT = independent_parser(RD, TD)
-                    timestamped_DEPENDENT   = dependent_parser(RD, TD)
-                    
-                    answer = Question(
-                        timestamped_X=timestamped_INDEPENDENT,
-                        timestamped_Y=timestamped_DEPENDENT,
-                        X_axis_name=independent_name,
-                        Y_axis_name=dependent_name)
 
-                    if answer.isNonTrivial():
-                        answer.plotXY(save=True)
+            for countI, (independent_parser, independent_name) in enumerate(INDEPENDENTS):
+
+                for countD, (dependent_parser, dependent_name) in enumerate(DEPENDENTS):
+
+                    if countI in args.independents and countD in args.dependents:
+
+                        timestamped_INDEPENDENT = independent_parser(RD, TD)
+                        timestamped_DEPENDENT   = dependent_parser(RD, TD)
+
+                        answer = Question(
+                            timestamped_X=timestamped_INDEPENDENT,
+                            timestamped_Y=timestamped_DEPENDENT,
+                            X_axis_name=independent_name,
+                            Y_axis_name=dependent_name)
+
+                        if answer.isNonTrivial():
+                            answer.plotXY(save=True)
 
     print("DONE")
 

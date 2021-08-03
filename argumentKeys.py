@@ -11,6 +11,7 @@ from src.questions.Question import *
 folder_key = '-folder'
 run_dependents_key = '--dependents'
 run_independents_key = '--independents'
+run_time_to_detection_key = '-ttd'
 
 INDEPENDENTS_to_run = range(0, len(INDEPENDENTS)-1, 1)
 DEPENDENTS_to_run = range(0, len(DEPENDENTS)-1, 1)
@@ -36,6 +37,10 @@ def parse():
         nargs="*",
         type=int,
         default=DEPENDENTS_to_run
+    )
+    CLI.add_argument(
+        run_time_to_detection_key,
+        action='store_true'
     )
 
     return CLI.parse_args()
