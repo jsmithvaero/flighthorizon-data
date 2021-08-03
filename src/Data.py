@@ -35,10 +35,6 @@ class Data:
 	def getPoints(self):
 		return self.points
 
-	# Should return the current format
-	def getFormat(self):
-		pass
-
 	# Should return some quick stats, for debugging.
 	def quickStats(self):
 		return ""
