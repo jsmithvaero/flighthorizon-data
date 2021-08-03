@@ -34,6 +34,9 @@ def main():
 
     print(truthD.quickStats())
 
+    # TODO: Add code that makes sure truth data from different sources ends up in different data blocks in BLOCKED_DATA
+    # TODO: Add code that makes sure radar data from different radars ends up in different data blocks
+
     # Now that we have truth and radar, let's bin it up into blocks.
     BLOCKS = radarTruthBlocks(radarD.getPoints(), truthD.getPoints())
 
@@ -54,9 +57,11 @@ def main():
     ]
 
     if args.ttd:
-
-
+        # For every
+        for (RD, TD) in BLOCKED_DATAS:
+            pass
         pass
+
     else:
         # Finally, let's answer some questions, over the various blocks.
         for (RD, TD) in BLOCKED_DATAS:

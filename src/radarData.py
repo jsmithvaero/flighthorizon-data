@@ -233,8 +233,13 @@ def find_RadarConfig(radar_point, RadarConfig_time_zone=timedelta(hours=-9), use
 	return os.join(echoguard_folder, radar_config_file)
 
 """
+Grabs data from a echoguard RadarConfig file. 
 
+Returns a physical object with a fov object inside 
 """
+def parse_RadarConfig(radar_RadarConfig_file):
+
+	pass
 
 
 # This function will be here for future implementations when a radar 
