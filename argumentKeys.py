@@ -11,6 +11,7 @@ from src.questions.Question import *
 folder_key = '-folder'
 run_dependents_key = '--dependents'
 run_independents_key = '--independents'
+question_percents_key = "--percents"
 
 INDEPENDENTS_to_run = range(0, len(INDEPENDENTS)-1, 1)
 DEPENDENTS_to_run = range(0, len(DEPENDENTS)-1, 1)
@@ -37,6 +38,13 @@ def parse():
         type=int,
         default=DEPENDENTS_to_run
     )
+    CLI.add_argument(
+        question_percents_key,
+        nargs="*",
+        type=int
+    )
+    
+
 
     return CLI.parse_args()
 
