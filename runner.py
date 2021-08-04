@@ -1,28 +1,30 @@
 """
 file    : runner.py
-author  : Max von Hippel;
+author  : Max von Hippel;PP
 authored: 4 July 2021
 usage   : python3 runner.py demo-data
 """
 import sys
 import argumentKeys as argKeys
 
-from src.radarData          import RadarData
-from src.blocks             import radarTruthBlocks
-from src.truthData          import *
-from src.questions.Question import *
+from src.radarData                  import RadarData
+from src.radarDataGroundAware       import RadarDataGroundAware
+from src.blocks                     import radarTruthBlocks
+from src.truthData                  import *
+from src.questions.Question         import *
+from src.questions.QuestionPcts     import *
 
 TRIVIAL_THRESHOLD = 4
 
 def main():
 
     args = argKeys.parse()
+    argKeyList = list(vars(args).keys())
 
-    # We begin by finding all of the data.
-    input_folder = args.folder[0]
+     # We begin by finding all of the data.
+    input_folder = args.folder[0]   
 
     radarD = RadarData  (input_folder)
-    
     adsbD  = ADSBData   (input_folder)
     nmeaD  = NMEAData   (input_folder)
     gpxD   = GPXData    (input_folder)
@@ -31,6 +33,19 @@ def main():
     truthD = adsbD.union(nmeaD)\
                   .union(gpxD)\
                   .union(mavlD)
+
+    # Answer any percent questions
+    if "percents" in argKeyList:
+
+        # for GroundAware
+        radarDGA = RadarDataGroundAware (input_folder)
+        questionPcts = QuestionPcts()
+        questionPcts.invalidvsValidTracksGroundAware(radarDGA)
+        questionPcts.radarAccuracyByDistanceAltitudeGroundAware(mavlD, radarDGA)
+
+        # for Echodyne
+        questionPcts.invalidvsValidTracks(radarD)
+        questionPcts.radarAccuracyByDistanceAltitude(mavlD, radarD)
 
     print(truthD.quickStats())
 
