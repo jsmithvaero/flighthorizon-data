@@ -10,7 +10,7 @@ from _datetime import date
 
 
 class TruthData(Data):
-
+    
 	def quickStats(self):
 		return "Truth Data Quick Stats : [ " \
 		       + str(len(self.points)) + " points ]"

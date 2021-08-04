@@ -1,0 +1,13 @@
+{
+    "application": {
+        "appMode": "product",
+        "logLevel": 3,
+        "logMask": "ffffffff",
+        "radarConfigPath": "../RadarData/echoguard_ui_data/RadarConfig_2021-01-28T092427.json",
+        "radarConfigPathBackup": "C:/Users/UTM Manager/Desktop/Radars/EchoGuard_UI_v1.2.3/RadarConfig/RadarConfig.json",
+        "radarMon": false,
+        "radarSim": false,
+        "title": "EchoGuard UI"
+    },
+    "sysConfigVersion": "1.2.0"
+}

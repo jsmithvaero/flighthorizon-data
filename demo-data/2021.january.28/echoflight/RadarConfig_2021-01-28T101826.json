@@ -1,0 +1,220 @@
+{
+    "dataPortEnable": {
+        "detection": false,
+        "measurement": true,
+        "rvmap": false,
+        "rvmapRadarNum": 1,
+        "status": true,
+        "track": true
+    },
+    "dataRecordEnable": {
+        "detection": false,
+        "masterRecord": true,
+        "measurement": true,
+        "recordingFolder": "../RadarData",
+        "rvmap": false,
+        "status": true,
+        "track": true
+    },
+    "display": {
+        "map": "EsriSatellite",
+        "metaDataMask": "22e",
+        "trackTailSec": 10
+    },
+    "fpgaVersion": "A1a",
+    "globalMasks": {
+        "clutterMaskWidth": 3,
+        "rcsMax": 100,
+        "rcsMin": -30
+    },
+    "radarConfigVersion": "1.6.0",
+    "radars": [
+        {
+            "additionalCmds": [
+            ],
+            "channel": {
+                "freqChannel": 2,
+                "tcmChannel": 0,
+                "tcmEnable": false
+            },
+            "fov": {
+                "fovAzMaxSearchDegree": 60,
+                "fovAzMaxTrackDegree": 60,
+                "fovAzMinSearchDegree": -60,
+                "fovAzMinTrackDegree": -60,
+                "fovAzStepDegree": 6,
+                "fovElMaxSearchDegree": 16,
+                "fovElMaxTrackDegree": 16,
+                "fovElMinSearchDegree": -2,
+                "fovElMinTrackDegree": -2,
+                "fovElStepDegree": 12,
+                "maxRangeMeter": 5987,
+                "minRangeMeter": 21
+            },
+            "general": {
+                "additionalCmdsEnable": false,
+                "ipAddress": "192.168.168.50",
+                "label": "R1",
+                "operationMode": 2,
+                "scriptPath": "",
+                "selected": false
+            },
+            "physical": {
+                "altitudeMeter": 253,
+                "headingDegree": 63,
+                "latitude": 65.12648010253906,
+                "longitude": -147.47427368164062,
+                "pitchDegree": 6,
+                "rollDegree": 0
+            },
+            "zoneMasks": [
+            ]
+        },
+        {
+            "additionalCmds": [
+            ],
+            "channel": {
+                "freqChannel": 0,
+                "tcmChannel": 0,
+                "tcmEnable": false
+            },
+            "fov": {
+                "fovAzMaxSearchDegree": 60,
+                "fovAzMaxTrackDegree": 60,
+                "fovAzMinSearchDegree": -60,
+                "fovAzMinTrackDegree": -60,
+                "fovAzStepDegree": 6,
+                "fovElMaxSearchDegree": 40,
+                "fovElMaxTrackDegree": 40,
+                "fovElMinSearchDegree": 0,
+                "fovElMinTrackDegree": -40,
+                "fovElStepDegree": 12,
+                "maxRangeMeter": 5000,
+                "minRangeMeter": 21
+            },
+            "general": {
+                "additionalCmdsEnable": false,
+                "ipAddress": "192.168.168.51",
+                "label": "R2",
+                "operationMode": 2,
+                "scriptPath": "",
+                "selected": true,
+                "serialNumber": "00001"
+            },
+            "physical": {
+                "altitudeMeter": 206,
+                "headingDegree": 64.9000015258789,
+                "latitude": 65.1262435913086,
+                "longitude": -147.47647094726562,
+                "pitchDegree": 0.699999988079071,
+                "rollDegree": -1
+            },
+            "zoneMasks": [
+            ]
+        },
+        {
+            "additionalCmds": [
+            ],
+            "channel": {
+                "freqChannel": 0,
+                "tcmChannel": 0,
+                "tcmEnable": false
+            },
+            "fov": {
+                "fovAzMaxSearchDegree": 60,
+                "fovAzMaxTrackDegree": 60,
+                "fovAzMinSearchDegree": -60,
+                "fovAzMinTrackDegree": -60,
+                "fovAzStepDegree": 6,
+                "fovElMaxSearchDegree": 40,
+                "fovElMaxTrackDegree": 40,
+                "fovElMinSearchDegree": 0,
+                "fovElMinTrackDegree": -40,
+                "fovElStepDegree": 12,
+                "maxRangeMeter": 2000,
+                "minRangeMeter": 21
+            },
+            "general": {
+                "additionalCmdsEnable": false,
+                "ipAddress": "169.254.1.12",
+                "label": "R3",
+                "operationMode": 0,
+                "scriptPath": "",
+                "selected": false
+            },
+            "physical": {
+                "altitudeMeter": 10,
+                "headingDegree": 20,
+                "latitude": 47.70886993408203,
+                "longitude": -122.18739318847656,
+                "pitchDegree": 0,
+                "rollDegree": 0
+            },
+            "zoneMasks": [
+            ]
+        },
+        {
+            "additionalCmds": [
+            ],
+            "channel": {
+                "freqChannel": 0,
+                "tcmChannel": 0,
+                "tcmEnable": false
+            },
+            "fov": {
+                "fovAzMaxSearchDegree": 60,
+                "fovAzMaxTrackDegree": 60,
+                "fovAzMinSearchDegree": -60,
+                "fovAzMinTrackDegree": -60,
+                "fovAzStepDegree": 6,
+                "fovElMaxSearchDegree": 40,
+                "fovElMaxTrackDegree": 40,
+                "fovElMinSearchDegree": 0,
+                "fovElMinTrackDegree": -40,
+                "fovElStepDegree": 12,
+                "maxRangeMeter": 2000,
+                "minRangeMeter": 21
+            },
+            "general": {
+                "additionalCmdsEnable": false,
+                "ipAddress": "169.254.1.13",
+                "label": "R4",
+                "operationMode": 0,
+                "scriptPath": "",
+                "selected": false
+            },
+            "physical": {
+                "altitudeMeter": 10,
+                "headingDegree": 30,
+                "latitude": 47.70886993408203,
+                "longitude": -122.18739318847656,
+                "pitchDegree": 0,
+                "rollDegree": 0
+            },
+            "zoneMasks": [
+            ]
+        }
+    ],
+    "wayPoints": [
+        {
+            "label": "Operator",
+            "latitude": 65.1262435913086,
+            "longitude": -147.47650146484375
+        },
+        {
+            "label": "",
+            "latitude": 0,
+            "longitude": 0
+        },
+        {
+            "label": "",
+            "latitude": 0,
+            "longitude": 0
+        },
+        {
+            "label": "",
+            "latitude": 0,
+            "longitude": 0
+        }
+    ]
+}
