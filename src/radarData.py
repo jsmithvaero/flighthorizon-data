@@ -6,10 +6,10 @@ purpose : Data handler for RADAR
 """
 import json
 import math
-import pymap3d
+
 import numpy as np
 
-from scipy.spatial.transform import Rotation
+
 
 from collections import OrderedDict
 from datetime    import datetime
@@ -142,6 +142,7 @@ def getRadarPoints(radar_file_name):
 										 "%Y-%m-%dT%H:%M:%SZ")
 			
 			conf = entry["confidenceLevel"]
+			trackID = entry["id"]
 			
 			p                  = Point()
 			p.stamp            = time
@@ -157,6 +158,7 @@ def getRadarPoints(radar_file_name):
 			p.elevation        = el
 			p.range            = rn
 			p.src              = radar_file_name
+			p.trackID 		   = trackID
 			points.append(p)
 
 	return points
