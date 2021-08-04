@@ -7,12 +7,12 @@ usage   : python3 runner.py demo-data
 import sys
 import argumentKeys as argKeys
 
-from src.radarData import RadarData
-from src.radarDataGroundAware import RadarDataGroundAware
-from src.blocks import radarTruthBlocks
-from src.truthData import *
-from src.questions.Question import *
-from src.questions.QuestionPcts import *
+from src.radarData               import RadarData
+from src.radarDataGroundAware    import RadarDataGroundAware
+from src.blocks                  import radarTruthBlocks
+from src.truthData               import *
+from src.questions.Question      import *
+from src.questions.QuestionPcts  import *
 
 TRIVIAL_THRESHOLD = 4
 
