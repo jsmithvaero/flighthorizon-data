@@ -245,6 +245,7 @@ def parse_RadarConfig(radar_RadarConfig_file):
 # This function will be here for future implementations when a radar 
 # logfile can contain the orientation information
 # For now it will just return a generic radar fov for Echodyne GroundAware radars.
+# TODO: get_radar_fov needs a link into parse_RadarConfig
 def get_radar_fov(radar_log_file):
 
 	fov = FoV()
@@ -265,7 +266,7 @@ def get_radar_fov(radar_log_file):
 	# Fill out the rest here
 	return fov
 
-
+# TODO: get_radar_physical needs a link into parse_RadarConfig
 def get_radar_physical(radar_log_file):
 	
 	physical = Physical()
@@ -301,12 +302,14 @@ def get_radar_physical(radar_log_file):
 # Unless a breakpoint is set before plot_vectors(vectors, ax) 
 # generate_debug_graph will freeze the execution
 def is_point_in_fov(
-	_range, 
-	testTruth, 
+	RD_point,
+	TD_point,
 	useRadarAsCenter=True, 
 	useRangeAsTrue=False,
 	calculate_Az_El_when_out_of_range=True, 
-	generate_debug_graph=False, 
+	generate_debug_graph=False,
+	fov = None,
+	physical = None,
 	centerLat=0, 
 	centerLon=0, 
 	centerAlt=0):
@@ -316,30 +319,16 @@ def is_point_in_fov(
 	# 0.0, 0.0, 0.0, 'demo-data/2021.january.27\\20210127T080320_radar.log')
 
 	# Setup variables
-	
-	time,        \
-		conf,    \
-		lat,     \
-		lon,     \
-		alt,     \
-		dist,    \
-		velVert, \
-		velX,    \
-		velY,    \
-		az,      \
-		el,      \
-		rn,      \
-		radar_log_file = _range
-	
-	fov      = get_radar_fov     (radar_log_file)
-	physical = get_radar_physical(radar_log_file)
+
+	if not fov or not physical:
+		fov      = get_radar_fov     (RD_point.src)
+		physical = get_radar_physical(RD_point.src)
 	
 	return_object = Point()
 
-	truthTime, truthLat, truthLon, truthAlt = testTruth
+	truthTime, truthLat, truthLon, truthAlt = TD_point.stamp, TD_point.latitude, TD_point.longitude, TD_point.altitude
 	
-	# Using the radar's location as 0,0,0 (optional) in enu coordinates 
-	# translate the plane's lat, lon, alt into enu
+	# Using the radar's location as 0,0,0 (optional) in enu coordinates
 	# e:East n:North u:Up
 	
 	if useRadarAsCenter:
@@ -350,27 +339,29 @@ def is_point_in_fov(
 
 	if useRangeAsTrue:
 	
-		truthLat = lat
-		truthLon = lon
-		truthAlt = alt
+		truthLat = RD_point.latitude
+		truthLon = RD_point.longitude
+		truthAlt = RD_point.altitude
 
+	# translate the plane's lat, lon, alt into enu
 	e, n, u = pymap3d.geodetic2enu(truthLat, 
-		                           truthLon, 
-		                           truthAlt, 
-		                           centerLat, 
-		                           centerLon, 
-		                           centerAlt, 
-		                           deg=True)
+								truthLon,
+								truthAlt,
+								centerLat,
+								centerLon,
+								centerAlt,
+								deg=True)
 	
 	plane_position = np.array([e, n, u])
-	
+
+	# translate the radar's location into enu, usually this will be 0,0,0 unless custom center is used
 	e, n, u = pymap3d.geodetic2enu(physical.lat, 
-		                           physical.lon, 
-		                           physical.alt, 
-		                           centerLat, 
-		                           centerLon, 
-		                           centerAlt, 
-		                           deg=True)
+								   physical.lon,
+								   physical.alt,
+								   centerLat,
+								   centerLon,
+								   centerAlt,
+								   deg=True)
 	
 	radar_position = np.array([e, n, u])
 
