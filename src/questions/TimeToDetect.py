@@ -38,6 +38,11 @@ class TimeToDetect(Question):
         self.encounter_RD_grab_range = encounter_RD_grab_range
         self.encounter_TD_grab_range = encounter_TD_grab_range
         self.encounter_list = []
+        self.time_to_detect = []
+        self.classify_in_fov()
+        self.populate_encounter_list()
+        self.process_encounter_list()
+
 
 
 # Steps:
@@ -45,10 +50,10 @@ class TimeToDetect(Question):
     def check_RD_TD_sources(self):
         RD_sources = []
         TD_sources = []
-        for point in self.RD_:
+        for point in self.RD_.points:
             if point.src not in RD_sources:
                 RD_sources.append(point.src)
-        for point in self.TD_:
+        for point in self.TD_.points:
             if point.src not in TD_sources:
                 TD_sources.append(point.src)
         return RD_sources, TD_sources
@@ -101,6 +106,13 @@ class TimeToDetect(Question):
 
 
 # Process the list of encounters to get a list of time to detect
+    def process_encounter_list(self):
+        self.time_to_detect = []
+        for encounter in self.encounter_list:
+            encounter.append_general_PAC_test()
+            encounter.process_RD_passed_PAC()
+            min_time = encounter.RD_sequence[encounter.first_valid_RD_point_location].time_diff
+            self.time_to_detect.append(min_time)
 
 
 # Useful functions

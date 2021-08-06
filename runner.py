@@ -11,6 +11,7 @@ from src.radarData          import RadarData
 from src.blocks             import radarTruthBlocks
 from src.truthData          import *
 from src.questions.Question import *
+from src.questions.TimeToDetect import *
 
 TRIVIAL_THRESHOLD = 4
 
@@ -22,15 +23,22 @@ def main():
     input_folder = args.folder[0]
 
     radarD = RadarData  (input_folder)
-    
-    adsbD  = ADSBData   (input_folder)
-    nmeaD  = NMEAData   (input_folder)
-    gpxD   = GPXData    (input_folder)
-    mavlD  = MavlinkData(input_folder)
+    if args.noadsb:
+        nmeaD = NMEAData(input_folder)
+        gpxD = GPXData(input_folder)
+        mavlD = MavlinkData(input_folder)
 
-    truthD = adsbD.union(nmeaD)\
-                  .union(gpxD)\
-                  .union(mavlD)
+        truthD = gpxD.union(nmeaD) \
+                     .union(mavlD)
+    else:
+        adsbD  = ADSBData   (input_folder)
+        nmeaD  = NMEAData   (input_folder)
+        gpxD   = GPXData    (input_folder)
+        mavlD  = MavlinkData(input_folder)
+
+        truthD = adsbD.union(nmeaD)\
+                      .union(gpxD)\
+                      .union(mavlD)
 
     print(truthD.quickStats())
 
@@ -59,7 +67,8 @@ def main():
     if args.ttd:
         # For every
         for (RD, TD) in BLOCKED_DATAS:
-            pass
+            answer = TimeToDetect(RD, TD)
+            print(answer.time_to_detect)
         pass
 
 

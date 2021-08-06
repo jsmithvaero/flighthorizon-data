@@ -57,6 +57,7 @@ def getADSBpoints(adsb_file_name):
 				p.latitude  = lat
 				p.longitude = lon
 				p.altitude  = alt
+				p.src       = adsb_file_name
 				points.append(p)
 
 	return points
@@ -95,7 +96,7 @@ def getNMEApoints(nmea_file_name, date):
 				p.longitude = msg.longitude
 				p.altitude  = msg.altitude
 				p.stamp     = datetime.combine(date, msg.timestamp)
-				
+				p.src       = nmea_file_name
 				points.add(p)
 
 			except:
@@ -165,7 +166,8 @@ def getGPXpoints(gpx_file_name):
 				p.stamp     = time
 				p.latitude  = lat
 				p.longitude = lon
-				p.altitude  = ele 
+				p.altitude  = ele
+				p.src       = gpx_file_name
 				
 				# ^ review this; is the elevation the same as altitude? TODO
 
@@ -215,7 +217,7 @@ def getMavlinkPoints(mavlink_file_name):
 				p.latitude  = lat
 				p.longitude = lon
 				p.altitude  = alt
-
+				p.src       = mavlink_file_name
 				points.append(p)
 
 	return points

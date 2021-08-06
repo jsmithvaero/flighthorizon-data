@@ -10,10 +10,6 @@ import json
 from datetime import datetime
 
 
-allowed_hoz_deviation = 10 # meters
-allowed_vertical_deviation = 10 # meters
-allowed_time_deviation = 15 # seconds
-
 """
 The purpose of this function is to check if there is any truth data within
 a spatio-temporal bubble (1 minute, 10 meters hoz, 10 meters vertical) of the
@@ -21,9 +17,18 @@ given radar point.  We can use this as a kind of simple "validity" check for
 radar data, although it is obviously imperfect.
 
 This is Levi: 
-I have added settings for allowed deviations, refer to above for values.
+I have added settings for allowed deviations, they are now optional arguments
 """
-def PAC(time, lat, lon, alt, truth):
+def PAC(time,
+		lat,
+		lon,
+		alt,
+		truth,
+		allowed_hoz_deviation=	10,  # meters
+		allowed_vertical_deviation = 10,  # meters
+		allowed_time_deviation = 60, # seconds
+		only_test_after_truth = True
+										):
 	
 	for truth_point in truth:	
 		
@@ -36,16 +41,20 @@ def PAC(time, lat, lon, alt, truth):
 
 		   return False
 
-		time_diff = (truth_point.stamp - time).total_seconds()
-		
-		if (time_diff >= allowed_time_deviation):
-			continue
+		if only_test_after_truth:
+			time_diff = (time - truth_point.stamp).total_seconds()
+			if time_diff >= 0 and time_diff < allowed_time_deviation:
+				continue
+		else:
+			time_diff = abs((truth_point.stamp - time).total_seconds())
+			if (time_diff <= allowed_time_deviation):
+				continue
 		
 		distance_meters = distanceKM(truth_point.latitude, 
 		                             truth_point.longitude, 
 		                             lat, 
-		                             lon) * 1000 
-		# Changed this from / to * because converting from Km to m
+		                             lon) * 1000
+
 		
 		if distance_meters > allowed_hoz_deviation:
 			continue
