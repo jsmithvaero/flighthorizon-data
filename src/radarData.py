@@ -295,7 +295,6 @@ def get_radar_physical(radar_log_file):
 	return physical
 
 
-# TODO: update is_point_in_fov to use new Point datastructure
 # Tests if testTruth is in the FoV of a radar described by a range
 # Unless a breakpoint is set before plot_vectors(vectors, ax) 
 # generate_debug_graph will freeze the execution
