@@ -250,7 +250,7 @@ def get_radar_fov(radar_log_file):
 
 	fov = FoV()
 
-	RadarConfigFile = find_RadarConfig(radar_log_file)
+	# RadarConfigFile = find_RadarConfig(radar_log_file)
 
 	fov.range     = 5000
 	fov.rangeUnit = "meter"
@@ -271,9 +271,7 @@ def get_radar_physical(radar_log_file):
 	
 	physical = Physical()
 
-	lat, lon, alt, ori = getRadarConfigLocation('..\\' + radar_log_file) \
-	                   if 'src' in os.path.dirname(__file__) else        \
-	                   getRadarConfigLocation(radar_log_file)
+	lat, lon, alt, ori = getRadarConfigLocation(radar_log_file)
 
 	physical.lat     = lat
 	physical.lon     = lon
@@ -375,6 +373,7 @@ def is_point_in_fov(
 		return_object.is_in_range = True
 	else:
 		return_object.is_in_range = False
+		return_object.is_in_fov = False
 
 	if return_object.is_in_range or calculate_Az_El_when_out_of_range:
 

@@ -65,7 +65,7 @@ class Encounter():
                     self.first_valid_RD_point_location = id
                     RD_point.time_diff = time_diff
                     self.RD_sequence[id].time_diff = time_diff
-            RD_passed_PAC.append(RD_point)
+                RD_passed_PAC.append(RD_point)
         self.RD_passed_PAC = RD_passed_PAC
 
 

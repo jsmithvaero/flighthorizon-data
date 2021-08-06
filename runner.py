@@ -30,6 +30,13 @@ def main():
 
         truthD = gpxD.union(nmeaD) \
                      .union(mavlD)
+    elif args.nogpx:
+        adsbD = ADSBData(input_folder)
+        nmeaD = NMEAData(input_folder)
+        mavlD = MavlinkData(input_folder)
+
+        truthD = adsbD.union(nmeaD) \
+            .union(mavlD)
     else:
         adsbD  = ADSBData   (input_folder)
         nmeaD  = NMEAData   (input_folder)

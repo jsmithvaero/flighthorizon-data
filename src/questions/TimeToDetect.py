@@ -25,8 +25,8 @@ class TimeToDetect(Question):
                   encounter_TD_grab_range=timedelta(seconds=60)
                   ):
 
-        self.RD_ = RD
-        self.TD_ = TD
+        self.RD_ = RD.points
+        self.TD_ = TD.points
         self.RD_source_ , self.TD_source_ = self.check_RD_TD_sources()
         if len(self.RD_source_) > 1 or len(self.TD_source_) > 1:
             print("TimeToDetect only setup for 1 radar source and 1 aircraft truth source. Please split when blocking.")
@@ -50,10 +50,10 @@ class TimeToDetect(Question):
     def check_RD_TD_sources(self):
         RD_sources = []
         TD_sources = []
-        for point in self.RD_.points:
+        for point in self.RD_:
             if point.src not in RD_sources:
                 RD_sources.append(point.src)
-        for point in self.TD_.points:
+        for point in self.TD_:
             if point.src not in TD_sources:
                 TD_sources.append(point.src)
         return RD_sources, TD_sources
@@ -69,7 +69,8 @@ class TimeToDetect(Question):
             fov_check = is_point_in_fov(self.RD_[0],
                                         tpoint,
                                         fov=self.RD_fov_,
-                                        physical=self.RD_physical_)
+                                        physical=self.RD_physical_,
+                                        calculate_Az_El_when_out_of_range=False)
             self.TD_[id].fov_test = fov_check
 # Segment the transitions out --> in into an encounter datastructure
     # Make a list of encounters
@@ -111,8 +112,11 @@ class TimeToDetect(Question):
         for encounter in self.encounter_list:
             encounter.append_general_PAC_test()
             encounter.process_RD_passed_PAC()
-            min_time = encounter.RD_sequence[encounter.first_valid_RD_point_location].time_diff
-            self.time_to_detect.append(min_time)
+            if len(encounter.RD_passed_PAC) > 0:
+                min_time = encounter.RD_sequence[encounter.first_valid_RD_point_location].time_diff
+                self.time_to_detect.append(min_time)
+            else:
+                print("No RD data that passed PAC in encounter")
 
 
 # Useful functions
