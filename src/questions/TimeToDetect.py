@@ -28,9 +28,14 @@ class TimeToDetect(Question):
         self.RD_ = RD.points
         self.TD_ = TD.points
         self.RD_source_ , self.TD_source_ = self.check_RD_TD_sources()
-        if len(self.RD_source_) > 1 or len(self.TD_source_) > 1:
-            print("TimeToDetect only setup for 1 radar source and 1 aircraft truth source. Please split when blocking.")
+        if len(self.TD_source_) > 1:
+            print("TimeToDetect only setup for 1 radar source and 1 aircraft truth source.\
+             Two aircraft sources detected, Please split when blocking.")
             assert(False)
+        if len(self.RD_source_) > 1:
+            print("TimeToDetect only setup for 1 radar source and 1 aircraft truth source.\
+                         Two radar sources detected, assuming both radars are the same.",
+                  " Please split when blocking.")
         self.RD_source_ = self.RD_source_[0]
         self.TD_source_ = self.TD_source_[0]
         self.RD_physical_ = self.get_radar_physical_()
