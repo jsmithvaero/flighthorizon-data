@@ -6,9 +6,11 @@ import json
 
 from src.Data  import Data
 from src.Point import Point
+from _datetime import date
+
 
 class TruthData(Data):
-
+    
 	def quickStats(self):
 		return "Truth Data Quick Stats : [ " \
 		       + str(len(self.points)) + " points ]"
@@ -204,6 +206,7 @@ def getMavlinkPoints(mavlink_file_name):
 			lat, lon = mavlinkCoords(lat, lon)
 			alt = float(alt) / 100 # cm -> m
 			time = None
+			(velX, velY) = (entry["vx"], entry["vy"])
 			try:
 				time = datetime.strptime(entry["timeStamp"], \
 										 "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -218,6 +221,7 @@ def getMavlinkPoints(mavlink_file_name):
 				p.longitude = lon
 				p.altitude  = alt
 				p.src       = mavlink_file_name
+        
 				points.append(p)
 
 	return points

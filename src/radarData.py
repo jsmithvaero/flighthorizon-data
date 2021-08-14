@@ -14,6 +14,10 @@ import os
 
 from scipy.spatial.transform import Rotation
 
+import numpy as np
+
+
+
 from collections import OrderedDict
 from datetime    import datetime
 from datetime    import timedelta
@@ -148,6 +152,7 @@ def getRadarPoints(radar_file_name):
 										 "%Y-%m-%dT%H:%M:%SZ")
 			
 			conf = entry["confidenceLevel"]
+			trackID = entry["id"]
 			
 			p                  = Point()
 			p.stamp            = time
@@ -163,6 +168,7 @@ def getRadarPoints(radar_file_name):
 			p.elevation        = el
 			p.range            = rn
 			p.src              = radar_file_name
+			p.trackID 		   = trackID
 			points.append(p)
 
 	return points

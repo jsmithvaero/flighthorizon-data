@@ -1,6 +1,6 @@
 """
 file    : runner.py
-author  : Max von Hippel;
+author  : Max von Hippel;PP
 authored: 4 July 2021
 usage   : python3 runner.py demo-data
 """
@@ -13,11 +13,14 @@ from src.truthData          import *
 from src.questions.Question import *
 from src.questions.TimeToDetect import *
 
+
 TRIVIAL_THRESHOLD = 4
+
 
 def main():
 
     args = argKeys.parse()
+    argKeyList = list(vars(args).keys())
 
     # We begin by finding all of the data.
     input_folder = args.folder[0]
@@ -46,6 +49,20 @@ def main():
         truthD = adsbD.union(nmeaD)\
                       .union(gpxD)\
                       .union(mavlD)
+
+    # Answer any percent questions
+    if "percents" in argKeyList:
+
+        # for GroundAware
+        radarDGA = RadarDataGroundAware(input_folder)
+        questionPcts = QuestionPcts()
+        questionPcts.invalidvsValidTracksGroundAware(radarDGA)
+        questionPcts.radarAccuracyByDistanceAltitudeGroundAware(
+            mavlD, radarDGA)
+
+        # for Echodyne
+        questionPcts.invalidvsValidTracks(radarD)
+        questionPcts.radarAccuracyByDistanceAltitude(mavlD, radarD)
 
     print(truthD.quickStats())
 
@@ -102,6 +119,7 @@ def main():
                         answer.plotXY(save=True)
 
     print("DONE")
+
 
 if __name__ == "__main__":
     main()
