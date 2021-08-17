@@ -113,8 +113,13 @@ def main():
                     if len(answer.time_to_detect) > 0:
                         rdSrc = _RD.points[0].src
                         tdSrc = _TD.points[0].src
-                        print("Comparig " + rdSrc + " to " + tdSrc)
-                        print([a.total_seconds() for a in answer.time_to_detect])
+                        print("[TTD] " + rdSrc + \
+                              ","      + tdSrc + \
+                              ","              + \
+                              ",".join([
+                                str(a.total_seconds()) 
+                                for a 
+                                in answer.time_to_detect]))
         pass
 
 
