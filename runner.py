@@ -89,12 +89,32 @@ def main():
     ]
 
     if args.ttd:
-        # For every
+
         for (RD, TD) in BLOCKED_DATAS:
-            # TODO: split up RD by src
-            # TODO: split up TD by src
-            answer = TimeToDetect(RD, TD)
-            print(answer.time_to_detect)
+            RD_srcs = set([p.src for p in RD.points])
+            subRDs = [ RD ] if ( len(RD_srcs) <= 1 ) else [
+                RadarData(
+                    folder=None, 
+                    points=[p for p in RD.points if p.src == s])
+                for s in RD_srcs
+            ]
+
+            TD_srcs = set([t.src for t in TD.points])
+            subTDs = [ TD ] if ( len(TD_srcs) <= 1 ) else [
+                TruthData(
+                    folder=None, 
+                    points=[t for t in TD.points if t.src == s])
+                for s in TD_srcs
+            ]
+
+            for _RD in subRDs:
+                for _TD in subTDs:
+                    answer = TimeToDetect(_RD, _TD)
+                    if len(answer.time_to_detect) > 0:
+                        rdSrc = _RD.points[0].src
+                        tdSrc = _TD.points[0].src
+                        print("Comparig " + rdSrc + " to " + tdSrc)
+                        print([a.total_seconds() for a in answer.time_to_detect])
         pass
 
 
