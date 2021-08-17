@@ -91,6 +91,8 @@ def main():
     if args.ttd:
         # For every
         for (RD, TD) in BLOCKED_DATAS:
+            # TODO: split up RD by src
+            # TODO: split up TD by src
             answer = TimeToDetect(RD, TD)
             print(answer.time_to_detect)
         pass
