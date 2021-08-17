@@ -123,6 +123,9 @@ def main():
         pass
 
 
+    if args.skipq:
+        return
+    
     # Finally, let's answer some questions, over the various blocks.
     for (RD, TD) in BLOCKED_DATAS:
 

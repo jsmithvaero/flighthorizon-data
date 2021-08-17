@@ -12,6 +12,7 @@ folder_key = '-folder'
 run_dependents_key = '--dependents'
 run_independents_key = '--independents'
 run_time_to_detection_key = '-ttd'
+skip_questions_key = '-skipq'
 exclude_adsb_key = '-noadsb'
 exclude_gpx_key = '-nogpx'
 
@@ -50,6 +51,10 @@ def parse():
     )
     CLI.add_argument(
         exclude_gpx_key,
+        action='store_true'
+    )
+    CLI.add_argument(
+        skip_questions_key,
         action='store_true'
     )
 
