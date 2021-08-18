@@ -30,6 +30,7 @@ from src.plotGraphs       import *
 from src.Point            import Point
 from src.Physical         import Physical
 from src.FoV              import FoV
+from src.dateParser       import parseDate
 
 class RadarData(Data):
 
@@ -131,46 +132,42 @@ def getRadarPoints(radar_file_name):
 	if receiver == None:
 		return None
 	points = []
-	with open(radar_file_name, "r") as fr:
-		stuff = json.loads(fr.read())
-		for entry in stuff:
-			(rn, az, el) = (entry["rest"], entry["azest"], entry["elest"])
-			
-			(velVert, velX, velY) = (entry["velzest"], 
-				                     entry["velxest"], 
-				                     entry["velyest"])
+	try:
+		with open(radar_file_name, "r") as fr:
+			stuff = json.loads(fr.read())
+			for entry in stuff:
+				(rn, az, el) = (entry["rest"], entry["azest"], entry["elest"])
+				
+				(velVert, velX, velY) = (entry["velzest"], 
+					                     entry["velxest"], 
+					                     entry["velyest"])
 
-			(lat, lon, alt) = targetPosition(rn, az, el, receiver)
-			# print("Passing in: ", lat, lon, receiver[0], receiver[1])
-			dist = 1000 * distanceKM(lat, lon, receiver[0], receiver[1])
-			time = None
-			try:
-				time = datetime.strptime(entry["timeStamp"], \
-										 "%Y-%m-%dT%H:%M:%S.%fZ")
-			except:
-				time = datetime.strptime(entry["timeStamp"], \
-										 "%Y-%m-%dT%H:%M:%SZ")
-			
-			conf = entry["confidenceLevel"]
-			trackID = entry["id"]
-			
-			p                  = Point()
-			p.stamp            = time
-			p.confidence       = conf
-			p.latitude         = lat
-			p.longitude        = lon
-			p.altitude         = alt
-			p.distance         = dist
-			p.verticalVelocity = velVert
-			p.xVelocity        = velX
-			p.yVelocity        = velY
-			p.azimuth          = az
-			p.elevation        = el
-			p.range            = rn
-			p.src              = radar_file_name
-			p.trackID 		   = trackID
-			points.append(p)
-
+				(lat, lon, alt) = targetPosition(rn, az, el, receiver)
+				# print("Passing in: ", lat, lon, receiver[0], receiver[1])
+				dist = 1000 * distanceKM(lat, lon, receiver[0], receiver[1])
+				time = parseDate(entry["timeStamp"])
+				
+				conf = entry["confidenceLevel"]
+				trackID = entry["id"]
+				
+				p                  = Point()
+				p.stamp            = time
+				p.confidence       = conf
+				p.latitude         = lat
+				p.longitude        = lon
+				p.altitude         = alt
+				p.distance         = dist
+				p.verticalVelocity = velVert
+				p.xVelocity        = velX
+				p.yVelocity        = velY
+				p.azimuth          = az
+				p.elevation        = el
+				p.range            = rn
+				p.src              = radar_file_name
+				p.trackID 		   = trackID
+				points.append(p)
+	except Exception as e:
+		return []
 	return points
 """
 Function to find the first timestamp in a _radar.log file.
@@ -183,13 +180,7 @@ def get_first_timestamp_in_radarLog(radar_file_name):
 	with open(radar_file_name, "r") as fr:
 		stuff = json.loads(fr.read())
 		for entry in stuff:
-			try:
-				time = datetime.strptime(entry["timeStamp"], \
-										 "%Y-%m-%dT%H:%M:%S.%fZ")
-			except:
-				time = datetime.strptime(entry["timeStamp"], \
-										 "%Y-%m-%dT%H:%M:%SZ")
-
+			time = parseDate(entry["timeStamp"])
 			return time
 """
 Find radar config file. Given a radar Point will find the closest timestamped echogarud RadarConfig file and return the name

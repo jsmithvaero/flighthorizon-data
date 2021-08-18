@@ -2,11 +2,14 @@ from collections import OrderedDict
 from glob        import glob
 from datetime    import datetime
 
+import ntpath
 import json
 
 from src.Data  import Data
 from src.Point import Point
 from _datetime import date
+
+from src.dateParser import parseDate
 
 
 class TruthData(Data):
@@ -46,13 +49,7 @@ def getADSBpoints(adsb_file_name):
 							   entry["lonDD"], \
 							   entry["altitudeMM"])
 			alt = float(alt) / 1000 # mm -> m
-			time = None
-			try:
-				time = datetime.strptime(entry["timeStamp"], \
-										 "%Y-%m-%dT%H:%M:%S.%fZ")
-			except:
-				time = datetime.strptime(entry["timeStamp"], \
-										 "%Y-%m-%dT%H:%M:%SZ")
+			time = parseDate(entry["timeStamp"])
 			if (lat, lon) != (0.0, 0.0):
 				p           = Point()
 				p.stamp     = time
@@ -67,17 +64,24 @@ def getADSBpoints(adsb_file_name):
 """
 NMEA
 """
+def getNMEAymd(file):
+	with open(file, "r") as fr:
+		for line in fr:
+			if "\"activated\":" in line:
+				rem = line.split("\"activated\":")[1]\
+				          .split("\"")[1]
+				ymd = rem.split("T")[0]
+				year, month, day = ymd.split("-")
+				return (int(year), int(month), int(day))
+	return None
+
 class NMEAData(TruthData):
 
 	# Should fill in the data from the folder
-	def fromFolder(self, folder):
+	def fromFolder(self, folder, defaultYear=2021):
 		points = set()
 		for file in glob(folder + "**/*.nmea", recursive=True):
-			if "_" in file:
-				year, month, day, _ = ntpath.basename(file).split("_", 3)
-				year  = int(year)
-				month = int(month)
-				day   = int(day)
+			(year, month, day) = getNMEAymd(file)
 			points = points.union(getNMEApoints(file, date(year, month, day)))
 		self.points = points
 
@@ -154,12 +158,7 @@ def getGPXpoints(gpx_file_name):
 									  time == None):
 
 				time = line.split("<time>")[1].split("</time>")[0]
-				try:
-					time = datetime.strptime(time, \
-											 "%Y-%m-%dT%H:%M:%S.%fZ")
-				except:
-					time = datetime.strptime(time, \
-											 "%Y-%m-%dT%H:%M:%SZ")
+				time = parseDate(time)
 
 			if (lat != None and lon != None and ele != None and time != None):
 
@@ -197,34 +196,31 @@ class MavlinkData(TruthData):
 
 def getMavlinkPoints(mavlink_file_name):
 	points = []
-	with open(mavlink_file_name, "r") as fr:
-		stuff = json.loads(fr.read())
-		for entry in stuff:
-			(lat, lon, alt) = (entry["latitude"],  \
-							   entry["longitude"], \
-							   entry["altitude"])
-			lat, lon = mavlinkCoords(lat, lon)
-			alt = float(alt) / 100 # cm -> m
-			time = None
-			(velX, velY) = (entry["vx"], entry["vy"])
-			try:
-				time = datetime.strptime(entry["timeStamp"], \
-										 "%Y-%m-%dT%H:%M:%S.%fZ")
-			except:
-				time = datetime.strptime(entry["timeStamp"], \
-										 "%Y-%m-%dT%H:%M:%SZ")
-			if (lat, lon, alt) != (0.0, 0.0, 0.0):
-				p = Point()
+	try:
+		with open(mavlink_file_name, "r") as fr:
+			stuff = json.loads(fr.read())
+			for entry in stuff:
+				(lat, lon, alt) = (entry["latitude"],  \
+								   entry["longitude"], \
+								   entry["altitude"])
+				lat, lon = mavlinkCoords(lat, lon)
+				alt = float(alt) / 100 # cm -> m
+				time = parseDate(entry["timeStamp"])
+				(velX, velY) = (entry["vx"], entry["vy"])
+				if (lat, lon, alt) != (0.0, 0.0, 0.0):
+					p = Point()
 
-				p.stamp     = time
-				p.latitude  = lat
-				p.longitude = lon
-				p.altitude  = alt
-				p.src       = mavlink_file_name
-        
-				points.append(p)
+					p.stamp     = time
+					p.latitude  = lat
+					p.longitude = lon
+					p.altitude  = alt
+					p.src       = mavlink_file_name
+	        
+					points.append(p)
 
-	return points
+		return points
+	except Exception as e:
+		return []
 
 def fixBrokenMavlinkCoords(coord):
 	if "E" in str(coord):
