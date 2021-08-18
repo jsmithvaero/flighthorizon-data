@@ -7,30 +7,26 @@ purpose : Data handler for RADAR
 import json
 import math
 import pymap3d
-import numpy as np
+import numpy                   as np
 import glob
 import dateutil.parser
 import os
-
-from scipy.spatial.transform import Rotation
-
-import numpy as np
-
-
-
-from collections import OrderedDict
-from datetime    import datetime
-from datetime    import timedelta
-
-from src.Data             import Data
-from glob                 import glob
-from src.mathUtils        import targetBearing, targetPosition, distanceKM
-from src.genericDataUtils import getConfigName
-from src.plotGraphs       import *
-from src.Point            import Point
-from src.Physical         import Physical
-from src.FoV              import FoV
-from src.dateParser       import parseDate
+from   scipy.spatial.transform import Rotation
+import numpy                   as np
+from   collections             import OrderedDict
+from   datetime                import datetime
+from   datetime                import timedelta
+from   src.Data                import Data
+from   glob                    import glob
+from   src.mathUtils           import targetBearing,  \
+                                      targetPosition, \
+                                      distanceKM
+from   src.genericDataUtils    import getConfigName
+from   src.plotGraphs          import *
+from   src.Point               import Point
+from   src.Physical            import Physical
+from   src.FoV                 import FoV
+from   src.dateParser          import parseDate
 
 class RadarData(Data):
 
@@ -171,8 +167,8 @@ def getRadarPoints(radar_file_name):
 	return points
 """
 Function to find the first timestamp in a _radar.log file.
-This is here because the filename uses 12 hr format, but does not specify AM or PM,
-so the point in the file with a valid timestamp should be used instead.
+This is here because the filename uses 12 hr format, but does not specify AM or
+PM, so the point in the file with a valid timestamp should be used instead.
 
 Adapted code from getRadarPoints
 """
@@ -183,32 +179,46 @@ def get_first_timestamp_in_radarLog(radar_file_name):
 			time = parseDate(entry["timeStamp"])
 			return time
 """
-Find radar config file. Given a radar Point will find the closest timestamped echogarud RadarConfig file and return the name
-Sources:
-https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
+Find radar config file. Given a radar Point will find the closest timestamped 
+echogarud RadarConfig file and return the name.
 
-https://stackoverflow.com/questions/12141150/from-list-of-integers-get-number-closest-to-a-given-value
+Sources:
+	https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-
+	directory
+
+	https://stackoverflow.com/questions/12141150/from-list-of-integers-get-
+	number-closest-to-a-given-value
 
 Notes:
-RadarConfig_time_zone should be made to use datetime timezone info eventually
+	RadarConfig_time_zone should be made to use datetime timezone info 
+	eventually
 
-use_filename_date off by default
+	use_filename_date off by default
 """
-def find_RadarConfig(radar_point, RadarConfig_time_zone=timedelta(hours=-9), use_filename_date=False):
-	radar_log_file = ('..\\' + radar_point.src) \
+def find_RadarConfig(
+	radar_point, 
+	RadarConfig_time_zone=timedelta(hours=-9), 
+	use_filename_date=False):
+	
+	radar_log_file = ('..\\' + radar_point.src)    \
 		if 'src' in os.path.dirname(__file__) else \
 		radar_point.src
 
 	# Parse datetime out of the radar_log_file
 	if use_filename_date:
+	
 		radar_log_filename = os.path.basename(radar_log_file)
 		radar_log_datestring = radar_log_filename.split('_')[0]
 		log_date = dateutil.parser.isoparse(radar_log_datestring)
+	
 	else:
+	
 		log_date = get_first_timestamp_in_radarLog(radar_log_file)
 
 	# Get list of RadarConfig files
-	echoguard_folder = os.path.join(os.path.dirname(radar_log_file), 'echoguard')
+	echoguard_folder = os.path.join(os.path.dirname(radar_log_file), 
+		                            'echoguard')
+	
 	echoguard_folder = ('..\\' + echoguard_folder) \
 				if 'src' in os.path.dirname(__file__) else \
 				echoguard_folder
@@ -218,9 +228,13 @@ def find_RadarConfig(radar_point, RadarConfig_time_zone=timedelta(hours=-9), use
 
 	# Parse into a list of datetimes
 	for config_name in radar_filenames:
+		
 		if 'RadarConfig' in config_name:
+		
 			date_string = config_name.split('_')[1].split('.')[0]
-			date = dateutil.parser.isoparse(date_string)-RadarConfig_time_zone
+			
+			date = dateutil.parser.isoparse(date_string) - RadarConfig_time_zone
+			
 			date_list.update({date: config_name})
 
 	# Find the closest *maybe prior* datetime and return the RadarConfig paths
@@ -241,8 +255,8 @@ def parse_RadarConfig(radar_RadarConfig_file):
 
 # This function will be here for future implementations when a radar 
 # logfile can contain the orientation information
-# For now it will just return a generic radar fov for Echodyne GroundAware radars.
-# TODO: get_radar_fov needs a link into parse_RadarConfig
+# For now it will just return a generic radar fov for Echodyne GroundAware
+# radars. TODO: get_radar_fov needs a link into parse_RadarConfig
 def get_radar_fov(radar_log_file):
 
 	fov = FoV()
@@ -320,7 +334,10 @@ def is_point_in_fov(
 	
 	return_object = Point()
 
-	truthTime, truthLat, truthLon, truthAlt = TD_point.stamp, TD_point.latitude, TD_point.longitude, TD_point.altitude
+	truthTime, truthLat, truthLon, truthAlt = TD_point.stamp,     \
+	                                          TD_point.latitude,  \
+	                                          TD_point.longitude, \
+	                                          TD_point.altitude
 	
 	# Using the radar's location as 0,0,0 (optional) in enu coordinates
 	# e:East n:North u:Up
@@ -348,7 +365,8 @@ def is_point_in_fov(
 	
 	plane_position = np.array([e, n, u])
 
-	# translate the radar's location into enu, usually this will be 0,0,0 unless custom center is used
+	# translate the radar's location into enu, usually this will be 0,0,0 unless 
+	# custom center is used
 	e, n, u = pymap3d.geodetic2enu(physical.lat, 
 								   physical.lon,
 								   physical.alt,
