@@ -6,6 +6,8 @@ purpose: Split data into temporal blocks (ie encounters)
 from src.mathUtils import PAC
 
 def blockSplitTimeIndexedData(data):
+	if len(data) == 0:
+		return []
 	sorted_data = sorted(data, key=lambda d : d.stamp)
 	blocks = [[sorted_data[0]]]
 	data_length = len(data)
@@ -24,6 +26,9 @@ def radarTruthBlocks(radar_data, truth_data):
 	BLOCKS = []
 
 	for radar_file_name in radar_data:
+
+		if len(radar_data[radar_file_name]) == 0:
+			continue
 
 		radar_file_blocks = blockSplitTimeIndexedData(\
 			                    radar_data[radar_file_name])
