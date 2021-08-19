@@ -26,6 +26,7 @@ from   src.Point               import Point
 from   src.Physical            import Physical
 from   src.FoV                 import FoV
 from   src.dateParser          import parseDate
+import geopy.distance
 
 class RadarData(Data):
 
@@ -297,64 +298,67 @@ def get_radar_fov(radar_log_file):
 	}, 
 	'display': {
 		'map': 'EsriSatellite', 
-		'metaDataMask': 'e2c', 
+		'metaDataMask': '3e', 
 		'trackTailSec': 10
 	}, 
 	'fpgaVersion': 'A1a', 
 	'globalMasks': {
 		'clutterMaskWidth': 3, 
 		'rcsMax': 100, 
-		'rcsMin': -13
+		'rcsMin': -30
 	}, 
 	'radarConfigVersion': '1.6.0', 
 	'radars': [
 		{
 			'additionalCmds': [], 
-			'channel': {
-				'freqChannel': 2, 
-				'tcmChannel': 0, 
-				'tcmEnable': False
-			}, 
+			'channel': {'freqChannel': 0, 'tcmChannel': 0, 'tcmEnable': False}, 
 			'fov': {
-				'fovAzMaxSearchDegree': 60, 
-				'fovAzMaxTrackDegree': 60, 
-				'fovAzMinSearchDegree': -60, 
-				'fovAzMinTrackDegree': -60, 
+				'fovAzMaxSearchDegree': 46, 
+				'fovAzMaxTrackDegree': 50, 
+				'fovAzMinSearchDegree': -46, 
+				'fovAzMinTrackDegree': -50, 
 				'fovAzStepDegree': 6, 
 				'fovElMaxSearchDegree': 40, 
 				'fovElMaxTrackDegree': 40, 
-				'fovElMinSearchDegree': 0, 
-				'fovElMinTrackDegree': -40, 
+				'fovElMinSearchDegree': -10, 
+				'fovElMinTrackDegree': -20, 
 				'fovElStepDegree': 12, 
 				'maxRangeMeter': 5000, 
 				'minRangeMeter': 40
 			}, 
 			'general': {
 				'additionalCmdsEnable': False, 
-				'ipAddress': '192.168.168.50', 
+				'ipAddress': '192.168.168.9', 
 				'label': 'west276', 
-				'operationMode': 2, 
+				'operationMode': 1, 
 				'scriptPath': 'C:/Users/UTM Manager/Desktop/Radars/EchoGuard_West_FC2_TC0.txt', 
-				'selected': False
+				'selected': True
 			}, 
 			'physical': {
 				'altitudeMeter': 1, 
-				'headingDegree': 0, 
-				'latitude': 64.85758972167969, 
-				'longitude': -147.85403442382812, 
+				'headingDegree': 270, 
+				'latitude': 64.85942077636719, 
+				'longitude': -147.8505401611328, 
 				'pitchDegree': 14.399999618530273, 
 				'rollDegree': -3.0999999046325684
 			}, 
 			'zoneMasks': []
-		}, ...
+		}, 
+		...
 """
-def getPitchRollLatLon(RadarConfigFile):
+def getPitchRollLatLon(RadarConfigFile, flight=False):
 	config = Point()
 	with open(RadarConfigFile, "r") as fr:
 
 		JSON = json.loads(fr.read())
 
-		radars = [r for r in JSON["radars"] if r["general"]["selected"] == True]
+		acc = lambda sp : ("/Echo" + ("Flight_" if flight else "Guard_")) in sp
+
+		radars = [
+			r for r in JSON["radars"] if 
+			r["general"]["selected"] and
+			acc(r["general"]["scriptPath"])
+		]
 
 		pitch_roll_lat_lons = [
 			(
@@ -368,17 +372,30 @@ def getPitchRollLatLon(RadarConfigFile):
 
 		pitch_roll_lat_lons = list(set(pitch_roll_lat_lons))
 
-		if len(pitch_roll_lat_lons) > 1:
-			print("Length exceeds 1: ", pitch_roll_lat_lons)
+		return pitch_roll_lat_lons
 
-		if len(pitch_roll_lat_lons) == 0:
-			return None
-
-		return pitch_roll_lat_lons[0]
-
+def isEchoFlight(log):
+	ll = log.lower()
+	if "echoguard" in ll:
+		return False
+	if "echoflight" in ll:
+		return True
+	conf = log.replace(".log", "_config.log")
+	try:
+		with open(conf, "r") as fr:
+			txt = fr.read().lower()
+			if "echoguard" in txt:
+				return False
+			if "echoflight" in txt:
+				return True
+	except Exception as e:
+		return None
+	return None
 
 def getPitchAndRoll(
 	radar_log_file,
+	lat,
+	lon,
 	searchDir="../flighthorizon-data/flight-tests/UAF-VAS-FAA/"):
 	# eg: ../flighthorizon-data/flight-tests/UAF-VAS-FAA/2021.01.22-01.29.
 	#     FlightTest1/2021.01.28.Day4/FHLogs/20210128T071018_radar.log
@@ -392,11 +409,34 @@ def getPitchAndRoll(
 	filteredCandidates = [c for c in candidateConfigs if year  in c and 
 	                                                     month in c and 
 	                                                     day   in c]
-	pitchRollLatLons = [getPitchRollLatLon(c) for c in filteredCandidates]
-	pitchRollLatLons = [prll for prll in pitchRollLatLons if prll != None]
-	pitchRollLatLons = list(set(pitchRollLatLons))
-	print(pitchRollLatLons)
-	return 0, 0
+	flight = isEchoFlight(radar_log_file)
+	if flight == None:
+		return None
+	pitchRollLatLons = list(set([
+		prll for c in filteredCandidates
+		for prll in getPitchRollLatLon(c, flight)
+		if prll != None
+	]))
+
+	best_option, best_distance = None, 0
+	
+	for prll in pitchRollLatLons:
+
+		dist = geopy.distance.distance(
+			(prll[2], prll[3]), 
+			(lat    , lon    )).m
+
+		if best_option == None or best_distance > dist:
+
+			best_option   = (prll[0], prll[1])
+			best_distance = dist
+
+	if best_distance > 1:
+		return None
+
+	print("best option was " + str(best_distance) + "m from expected location.")
+
+	return best_option
 
 # TODO: get_radar_physical needs a link into parse_RadarConfig
 def get_radar_physical(radar_log_file):
@@ -418,7 +458,10 @@ def get_radar_physical(radar_log_file):
 	# Temporary values for Testing, should be replaced with some refrence system
 	# to RadarConfig_*.json stuff
 
-	physical.pitch, physical.roll = getPitchAndRoll(radar_log_file)
+	PR = getPitchAndRoll(radar_log_file, lat, lon)
+	if PR == None:
+		return None
+	physical.pitch, physical.roll = PR
 
 	physical.pitchUnit = "degree"
 	physical.pitchUnit = "degree"
@@ -451,6 +494,8 @@ def is_point_in_fov(
 	if not fov or not physical:
 		fov      = get_radar_fov     (RD_point.src)
 		physical = get_radar_physical(RD_point.src)
+		if physical == None:
+			return None
 	
 	return_object = Point()
 
