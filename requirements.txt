@@ -1,7 +1,0 @@
-deflate_dict
-dictances
-tabulate
-pynmea2
-cartopy
-pandas
-pymap3d

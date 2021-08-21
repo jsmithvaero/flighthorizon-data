@@ -101,6 +101,9 @@ class TimeToDetect(Question):
         
         # iterate through truth point list
         for _id, tpoint in enumerate(self.TD_):
+
+            if tpoint == None or tpoint.fov_test == None:
+                continue
             
             # if last_in_FoV is False, and tpoint.fov_test.is_in_fov is True
             if last_in_FoV is False and tpoint.fov_test.is_in_fov:

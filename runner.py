@@ -19,27 +19,36 @@ TRIVIAL_THRESHOLD = 4
 
 def main():
 
+    print("Running analysis ...")
+
     args = argKeys.parse()
     argKeyList = list(vars(args).keys())
 
     # We begin by finding all of the data.
     input_folder = args.folder[0]
 
-    radarD = RadarData  (input_folder)
+    print("Reading in radar data from " + input_folder)
+
+    radarD = RadarData(input_folder)
+
+    print("Reading in truth data from " + input_folder)
+    
     if args.noadsb:
-        nmeaD = NMEAData(input_folder)
-        gpxD = GPXData(input_folder)
+    
+        nmeaD = NMEAData   (input_folder)
+        gpxD  = GPXData    (input_folder)
         mavlD = MavlinkData(input_folder)
 
         truthD = gpxD.union(nmeaD) \
                      .union(mavlD)
     elif args.nogpx:
-        adsbD = ADSBData(input_folder)
-        nmeaD = NMEAData(input_folder)
+    
+        adsbD = ADSBData   (input_folder)
+        nmeaD = NMEAData   (input_folder)
         mavlD = MavlinkData(input_folder)
 
         truthD = adsbD.union(nmeaD) \
-            .union(mavlD)
+                      .union(mavlD)
     else:
         adsbD  = ADSBData   (input_folder)
         nmeaD  = NMEAData   (input_folder)
@@ -66,8 +75,12 @@ def main():
 
     print(truthD.quickStats())
 
-    # TODO: Add code that makes sure truth data from different sources ends up in different data blocks in BLOCKED_DATA
-    # TODO: Add code that makes sure radar data from different radars ends up in different data blocks
+    print("Computing blocks ...")
+
+    # TODO: Add code that makes sure truth data from different sources ends up 
+    #       in different data blocks in BLOCKED_DATA
+    # TODO: Add code that makes sure radar data from different radars ends up in 
+    #       different data blocks
 
     # Now that we have truth and radar, let's bin it up into blocks.
     BLOCKS = radarTruthBlocks(radarD.getPoints(), truthD.getPoints())
@@ -90,7 +103,12 @@ def main():
 
     if args.ttd:
 
+        print("Running ttd analysis ...")
+
         for (RD, TD) in BLOCKED_DATAS:
+
+            print("Computing blocked subRDs ...")
+
             RD_srcs = set([p.src for p in RD.points])
             subRDs = [ RD ] if ( len(RD_srcs) <= 1 ) else [
                 RadarData(
@@ -98,6 +116,8 @@ def main():
                     points=[p for p in RD.points if p.src == s])
                 for s in RD_srcs
             ]
+
+            print("Computing blocked subTDs ...")
 
             TD_srcs = set([t.src for t in TD.points])
             subTDs = [ TD ] if ( len(TD_srcs) <= 1 ) else [
@@ -129,10 +149,11 @@ def main():
     # Finally, let's answer some questions, over the various blocks.
     for (RD, TD) in BLOCKED_DATAS:
 
+        for countI, (independent_parser, \
+                     independent_name) in enumerate(INDEPENDENTS):
 
-        for countI, (independent_parser, independent_name) in enumerate(INDEPENDENTS):
-
-            for countD, (dependent_parser, dependent_name) in enumerate(DEPENDENTS):
+            for countD, (dependent_parser, \
+                         dependent_name) in enumerate(DEPENDENTS):
 
                 if countI in args.independents and countD in args.dependents:
 
