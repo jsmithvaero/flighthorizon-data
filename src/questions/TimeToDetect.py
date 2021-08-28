@@ -26,7 +26,7 @@ class TimeToDetect(Question):
         encounter_RD_grab_range=timedelta(seconds=60),
         encounter_TD_grab_range=timedelta(seconds=60)):
 
-        self.RD_ = RD.points
+        self.RD_ = RD
         self.TD_ = TD.points
         self.RD_source_ , self.TD_source_ = self.check_RD_TD_sources()
         
@@ -164,7 +164,19 @@ class TimeToDetect(Question):
         valid_points = []
         
         for point in points:
-            if abs(point.stamp - target_time) < time_delta:
+            try:
+                if abs(point.stamp.timestamp() * 1000 - target_time.timestamp() * 1000) < 60000:
+                    valid_points.append(point)
+            except:
+                targetTime =  ((target_time.timestamp() * 1000))
+                pointTime = point.stamp * 1000
+                timeDiff = abs(point.stamp * 1000 - targetTime)
+                timeDiffSecs = timeDiff / 1000
+                timeDiffMins = timeDiffSecs / 60
+                timeDiffHrs = timeDiffMins / 60
+                print(timeDiffHrs * 60)
+
+                #if ((timeDiffHrs * 60) < 1):
                 valid_points.append(point)
         
         return valid_points

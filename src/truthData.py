@@ -204,7 +204,7 @@ def getMavlinkPoints(mavlink_file_name):
 								   entry["longitude"], \
 								   entry["altitude"])
 				lat, lon = mavlinkCoords(lat, lon)
-				alt = float(alt) / 100 # cm -> m
+				alt = float(alt) / 1000 # cm -> m
 				time = parseDate(entry["timeStamp"])
 				(velX, velY) = (entry["vx"], entry["vy"])
 				if (lat, lon, alt) != (0.0, 0.0, 0.0):
@@ -221,6 +221,39 @@ def getMavlinkPoints(mavlink_file_name):
 		return points
 	except Exception as e:
 		return []
+
+def getMavlinkPoints(mavlink_file_name):
+	points = []
+	with open(mavlink_file_name, "r") as fr:
+		stuff = json.loads(fr.read())
+		for entry in stuff:
+			(lat, lon, alt) = (entry["latitude"],  \
+								entry["longitude"], \
+								entry["altitude"])
+			lat, lon = mavlinkCoords(lat, lon)
+			alt = float(alt) / 1000 # cm -> m
+			time = None
+			(velX, velY) = (entry["vx"], entry["vy"])
+			try:
+				time = datetime.strptime(entry["timeStamp"], \
+											"%Y-%m-%dT%H:%M:%S.%fZ")
+			except:
+				time = datetime.strptime(entry["timeStamp"], \
+											"%Y-%m-%dT%H:%M:%SZ")
+			if (lat, lon, alt) != (0.0, 0.0, 0.0):
+				p = Point()
+
+				p.stamp     = time
+				p.latitude  = lat
+				p.longitude = lon
+				p.altitude  = alt
+				p.xVelocity = velX
+				p.yVelocity = velY
+				p.src = mavlink_file_name
+
+				points.append(p)
+
+	return points
 
 def fixBrokenMavlinkCoords(coord):
 	if "E" in str(coord):

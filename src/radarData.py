@@ -21,7 +21,7 @@ from   src.mathUtils           import targetBearing,  \
                                       targetPosition, \
                                       distanceKM
 from   src.genericDataUtils    import getConfigName
-from   src.plotGraphs          import *
+#from   src.plotGraphs          import *
 from   src.Point               import Point
 from   src.Physical            import Physical
 from   src.FoV                 import FoV
@@ -396,25 +396,25 @@ def getPitchAndRoll(
 	radar_log_file,
 	lat,
 	lon,
-	searchDir="../flighthorizon-data/flight-tests/UAF-VAS-FAA/"):
+	searchDir="C:/_dev/dataanalysis/flighthorizon-data/flight-tests/UAF-VAS-FAA/2021.06.04-06.11.FlightTest4/2021.06.10.Thursday/Radar_Logs/EchoGuard/EchoGuard_UI_v1.2.3/RadarConfig"):
 	# eg: ../flighthorizon-data/flight-tests/UAF-VAS-FAA/2021.01.22-01.29.
 	#     FlightTest1/2021.01.28.Day4/FHLogs/20210128T071018_radar.log
 	datestamp = radar_log_file.split("_radar.log")[0].split("/")[-1]
 	YMD       = datestamp.split("T")[0]
-	year      = YMD[0:4]
-	month     = YMD[4:6]
-	day       = YMD[6: ]
-	assert(searchDir in radar_log_file)
-	candidateConfigs = glob(searchDir + "**/*RadarConfig*.json", recursive=True)
+	year      = "2021"
+	month     = "06"
+	day       = "09"
+	#assert(searchDir in radar_log_file)
+	candidateConfigs = glob(searchDir + "**/*RadarConfigGA*.json", recursive=True)
 	filteredCandidates = [c for c in candidateConfigs if year  in c and 
 	                                                     month in c and 
 	                                                     day   in c]
-	flight = isEchoFlight(radar_log_file)
-	if flight == None:
-		return None
+	# flight = isEchoFlight(radar_log_file)
+	# if flight == None:
+	# 	return None
 	pitchRollLatLons = list(set([
 		prll for c in filteredCandidates
-		for prll in getPitchRollLatLon(c, flight)
+		for prll in getPitchRollLatLon(c, False)
 		if prll != None
 	]))
 
@@ -443,7 +443,7 @@ def get_radar_physical(radar_log_file):
 	
 	physical = Physical()
 
-	lat, lon, alt, ori = getRadarConfigLocation(radar_log_file)
+	lat, lon, alt, ori = (65.07959367, -147.86638883, 373.649, 120)
 
 	physical.lat     = lat
 	physical.lon     = lon

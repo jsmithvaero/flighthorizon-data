@@ -97,7 +97,7 @@ def getRadarPoints(radar_file_name):
 			conf = classification["likelihood"];
 
 			p = Point()
-			p.updateTime 		= updateTime
+			p.stamp		= updateTime
 			p.confidence 		= conf
 			p.latitude 			= lat
 			p.longitude 		= lon
@@ -105,6 +105,7 @@ def getRadarPoints(radar_file_name):
 			p.distance 			= dist
 			p.speed 			= speed
 			p.trackID 			= track_id
+			p.src               = radar_file_name
 			points.append(p)
 
 	return points

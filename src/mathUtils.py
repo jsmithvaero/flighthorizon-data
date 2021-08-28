@@ -42,12 +42,12 @@ def PAC(time,
 		   return False
 
 		if only_test_after_truth:
-			time_diff = (time - truth_point.stamp).total_seconds()
-			if time_diff >= 0 and time_diff < allowed_time_deviation:
+			time_diff = abs((time * 1000) - (truth_point.stamp.timestamp() * 1000)) 
+			if time_diff >= 0 and time_diff < 2000:
 				continue
 		else:
-			time_diff = abs((truth_point.stamp - time).total_seconds())
-			if (time_diff <= allowed_time_deviation):
+			time_diff = abs((time * 1000) - (truth_point.stamp.timestamp() * 1000)) 
+			if (time_diff <= 2000):
 				continue
 		
 		distance_meters = distanceKM(truth_point.latitude, 
@@ -56,12 +56,12 @@ def PAC(time,
 		                             lon) * 1000
 
 		
-		if distance_meters > allowed_hoz_deviation:
+		if distance_meters > 110:
 			continue
 		
 		distance_alt = abs(alt - truth_point.altitude)
 		
-		if (distance_alt > allowed_vertical_deviation):
+		if (distance_alt > 40):
 			continue
 		
 		return True

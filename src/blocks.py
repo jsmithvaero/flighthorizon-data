@@ -13,8 +13,7 @@ def blockSplitTimeIndexedData(data):
 	data_length = len(data)
 	for j in range(1, data_length):
 		
-		if ((sorted_data[j    ].stamp - \
-			 sorted_data[j - 1].stamp).total_seconds() / 60) > 10:
+		if ((sorted_data[j].stamp - sorted_data[j - 1].stamp) > 10000):
 
 			blocks.append([sorted_data[j]])
 		else:
@@ -37,12 +36,12 @@ def radarTruthBlocks(radar_data, truth_data):
 
 		for radar_block in radar_file_blocks:
 
-			mintime = radar_block[ 0].stamp
-			maxtime = radar_block[-1].stamp
+			mintime = radar_block[ 0].stamp * 1000
+			maxtime = radar_block[-1].stamp * 1000
 
 			truth_block = [
 				p for p in truth_data
-				if ((mintime <= p.stamp) and (p.stamp <= maxtime))
+				#if ((mintime <= p.stamp.timestamp() * 1000) and (p.stamp.timestamp() * 1000 <= maxtime))
 			]
 
 			BLOCKS.append((radar_block, truth_block))

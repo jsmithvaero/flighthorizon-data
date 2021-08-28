@@ -8,6 +8,7 @@ import sys
 import argumentKeys as argKeys
 
 from src.radarData          import RadarData
+from src.radarDataGroundAware    import RadarDataGroundAware
 from src.blocks             import radarTruthBlocks
 from src.truthData          import *
 from src.questions.Question import *
@@ -25,13 +26,20 @@ def main():
     argKeyList = list(vars(args).keys())
 
     # We begin by finding all of the data.
-    input_folder = args.folder[0]
+    #input_folder = args.folder[0]
+    #input_folder = "C:/_dev/dataanalysis/flighthorizon-data/flight-tests/UAF-VAS-FAA/2021.06.04-06.11.FlightTest4/2021.06.09.Wednesday/FHLogs/FH/06.09.21";
+    input_folder = "C:/_dev/dataanalysis/flighthorizon-data/flight-tests/UAF-VAS-FAA/2021.06.04-06.11.FlightTest4/2021.06.09.Wednesday/RadarLogs/GroundAware/June_9_(raw)";
+
+    #input_folder = "C:/logs/FAA-TO2/06-09-21"
+    input_foldermv = "C:/logs/FAA-TO2/06-09-21"
 
     print("Reading in radar data from " + input_folder)
 
-    radarD = RadarData(input_folder)
+   #radarD = RadarData(input_folder)
+    radarD = RadarDataGroundAware(input_folder)
+    
 
-    print("Reading in truth data from " + input_folder)
+    print("Reading in truth data from " + input_foldermv)
     
     if args.noadsb:
     
@@ -53,27 +61,36 @@ def main():
         adsbD  = ADSBData   (input_folder)
         nmeaD  = NMEAData   (input_folder)
         gpxD   = GPXData    (input_folder)
-        mavlD  = MavlinkData(input_folder)
+        mavlD  = MavlinkData(input_foldermv)
 
         truthD = adsbD.union(nmeaD)\
                       .union(gpxD)\
                       .union(mavlD)
 
-    # Answer any percent questions
-    if "percents" in argKeyList:
+    TD = [
+        p for p in truthD.getPoints()
+    ]
 
-        # for GroundAware
-        radarDGA = RadarDataGroundAware(input_folder)
-        questionPcts = QuestionPcts()
-        questionPcts.invalidvsValidTracksGroundAware(radarDGA)
-        questionPcts.radarAccuracyByDistanceAltitudeGroundAware(
-            mavlD, radarDGA)
+    RD = []    
+    for key in radarD.points:
+        _RD = radarD.points[key]
+        RD.append(_RD)
 
-        # for Echodyne
-        questionPcts.invalidvsValidTracks(radarD)
-        questionPcts.radarAccuracyByDistanceAltitude(mavlD, radarD)
+    # # Answer any percent questions
+    # if "percents" in argKeyList:
 
-    print(truthD.quickStats())
+    #     # for GroundAware
+    #     radarDGA = RadarDataGroundAware(input_folder)
+    #     questionPcts = QuestionPcts()
+    #     questionPcts.invalidvsValidTracksGroundAware(radarDGA)
+    #     questionPcts.radarAccuracyByDistanceAltitudeGroundAware(
+    #         mavlD, radarDGA)
+
+    #     # for Echodyne
+    #     questionPcts.invalidvsValidTracks(radarD)
+    #     questionPcts.radarAccuracyByDistanceAltitude(mavlD, radarD)
+
+    # print(truthD.quickStats())
 
     print("Computing blocks ...")
 
@@ -83,93 +100,133 @@ def main():
     #       different data blocks
 
     # Now that we have truth and radar, let's bin it up into blocks.
-    BLOCKS = radarTruthBlocks(radarD.getPoints(), truthD.getPoints())
+    # BLOCKS = radarTruthBlocks(radarD.getPoints(), truthD.getPoints())
 
-    BLOCKED_DATAS = [
-        (RadarData(folder=None, points=radarBlock),
-         TruthData(folder=None, points=truthBlock))
+    # BLOCKED_DATAS = [
+    #     (RadarData(folder=None, points=radarBlock),
+    #      TruthData(folder=None, points=truthBlock))
         
-        for (radarBlock, truthBlock) in BLOCKS
+    #     for (radarBlock, truthBlock) in BLOCKS
+    # ]
+
+    # # Remove singletons and empty sets.
+    # BLOCKED_DATAS = [
+        
+    #     (RD, TD) for (RD, TD) in BLOCKED_DATAS
+        
+    #     if RD.isNonTrivial(TRIVIAL_THRESHOLD) and
+    #        TD.isNonTrivial(TRIVIAL_THRESHOLD)
+    # ]
+
+    #if args.ttd:
+
+    print("Running ttd analysis ...")
+
+    # for (RD, TD) in BLOCKED_DATAS:
+
+    #     print("Computing blocked subRDs ...")
+
+    #     RD_srcs = set([p.src for p in RD.points])
+    #     subRDs = [ RD ] if ( len(RD_srcs) < 1 ) else [
+    #         RadarData(
+    #             folder=None, 
+    #             points=[p for p in RD.points if p.src == s])
+    #         for s in RD_srcs
+    #     ]
+
+    #     print("Computing blocked subTDs ...")
+
+    TD_srcs = set([t.src for t in TD])
+    subTDs = [ TD ] if ( len(TD_srcs) <= 1 ) else [
+        TruthData(
+            folder=None, 
+            points=[t for t in TD if t.src == s])
+        for s in TD_srcs
     ]
 
-    # Remove singletons and empty sets.
-    BLOCKED_DATAS = [
-        
-        (RD, TD) for (RD, TD) in BLOCKED_DATAS
-        
-        if RD.isNonTrivial(TRIVIAL_THRESHOLD) and
-           TD.isNonTrivial(TRIVIAL_THRESHOLD)
-    ]
 
-    if args.ttd:
+    f = open("c:/temp/gattdanswers.txt", "w")
 
-        print("Running ttd analysis ...")
+    for _RD in RD:
+        for _TD in subTDs:
+            answer = TimeToDetect(_RD, _TD)
+            if len(answer.time_to_detect) > 0:
+                rdSrc = _RD.src
+                tdSrc = _TD.points[0].src
+                print("[TTD] " + rdSrc + \
+                        ","      + tdSrc + \
+                        ","              + \
+                        ",".join([
+                        str(a.total_seconds()) 
+                        for a 
+                        in answer.time_to_detect]))
 
-        for (RD, TD) in BLOCKED_DATAS:
+                f.write("[TTD] " + rdSrc + \
+                        ","      + tdSrc + \
+                        ","              + \
+                        ",".join([
+                        str(a.total_seconds()) 
+                        for a 
+                        in answer.time_to_detect]) + "\n")
 
-            print("Computing blocked subRDs ...")
+    f.close()
+    # for RD in subRDs:
+    #     for _TD in subTDs:
+    #         answer = TimeToDetect(_RD, _TD)
+    #         if len(answer.time_to_detect) > 0:
+    #             rdSrc = _RD.points[0].src
+    #             tdSrc = _TD.points[0].src
+    #             print("[TTD] " + rdSrc + \
+    #                     ","      + tdSrc + \
+    #                     ","              + \
+    #                     ",".join([
+    #                     str(a.total_seconds()) 
+    #                     for a 
+    #                     in answer.time_to_detect]))
 
-            RD_srcs = set([p.src for p in RD.points])
-            subRDs = [ RD ] if ( len(RD_srcs) <= 1 ) else [
-                RadarData(
-                    folder=None, 
-                    points=[p for p in RD.points if p.src == s])
-                for s in RD_srcs
-            ]
-
-            print("Computing blocked subTDs ...")
-
-            TD_srcs = set([t.src for t in TD.points])
-            subTDs = [ TD ] if ( len(TD_srcs) <= 1 ) else [
-                TruthData(
-                    folder=None, 
-                    points=[t for t in TD.points if t.src == s])
-                for s in TD_srcs
-            ]
-
-            for _RD in subRDs:
-                for _TD in subTDs:
-                    answer = TimeToDetect(_RD, _TD)
-                    if len(answer.time_to_detect) > 0:
-                        rdSrc = _RD.points[0].src
-                        tdSrc = _TD.points[0].src
-                        print("[TTD] " + rdSrc + \
-                              ","      + tdSrc + \
-                              ","              + \
-                              ",".join([
-                                str(a.total_seconds()) 
-                                for a 
-                                in answer.time_to_detect]))
-        pass
+    # x = 0
+    # for key in radarD.points:
+    #     _RD = radarD.points[key]
+    #     for _TD in truthD.getPoints():
+    #         answer = TimeToDetect(_RD[x], _TD)
+    #         if len(answer.time_to_detect) > 0:
+    #             rdSrc = _RD.points[0].src
+    #             tdSrc = _TD.points[0].src
+    #             print("[TTD] " + rdSrc + \
+    #                     ","      + tdSrc + \
+    #                     ","              + \
+    #                     ",".join([
+    #                     str(a.total_seconds()) 
+    #                     for a 
+    #                     in answer.time_to_detect]))
 
 
-    if args.skipq:
-        return
+
     
-    # Finally, let's answer some questions, over the various blocks.
-    for (RD, TD) in BLOCKED_DATAS:
+    # # Finally, let's answer some questions, over the various blocks.
+    # for (RD, TD) in BLOCKED_DATAS:
 
-        for countI, (independent_parser, \
-                     independent_name) in enumerate(INDEPENDENTS):
+    #     for countI, (independent_parser, \
+    #                  independent_name) in enumerate(INDEPENDENTS):
 
-            for countD, (dependent_parser, \
-                         dependent_name) in enumerate(DEPENDENTS):
+    #         for countD, (dependent_parser, \
+    #                      dependent_name) in enumerate(DEPENDENTS):
 
-                if countI in args.independents and countD in args.dependents:
+    #             if countI in args.independents and countD in args.dependents:
 
-                    timestamped_INDEPENDENT = independent_parser(RD, TD)
-                    timestamped_DEPENDENT   = dependent_parser(RD, TD)
+    #                 timestamped_INDEPENDENT = independent_parser(RD, TD)
+    #                 timestamped_DEPENDENT   = dependent_parser(RD, TD)
 
-                    answer = Question(
-                        timestamped_X=timestamped_INDEPENDENT,
-                        timestamped_Y=timestamped_DEPENDENT,
-                        X_axis_name=independent_name,
-                        Y_axis_name=dependent_name)
+    #                 answer = Question(
+    #                     timestamped_X=timestamped_INDEPENDENT,
+    #                     timestamped_Y=timestamped_DEPENDENT,
+    #                     X_axis_name=independent_name,
+    #                     Y_axis_name=dependent_name)
 
-                    if answer.isNonTrivial():
-                        answer.plotXY(save=True)
+    #                 if answer.isNonTrivial():
+    #                     answer.plotXY(save=True)
 
-    print("DONE")
+    # print("DONE")
 
 
 if __name__ == "__main__":

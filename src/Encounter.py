@@ -17,8 +17,8 @@ class Encounter():
         self.RD_sequence = RD_sequence
         self.first_valid_RD_point_location = None
         self.RD_passed_PAC = []
-        self.PAC_hoz_deviation = 100 # meters
-        self.PAC_vert_deviation = 100 # meters
+        self.PAC_hoz_deviation = 10 # meters
+        self.PAC_vert_deviation = 10 # meters
         self.PAC_time_deviation = 60 # seconds
 
     # Appends a PAC_results_TD_point to evey point in RD_sequence
@@ -59,7 +59,7 @@ class Encounter():
                 # test if this is the earliest time PAC_results is true
                 # choosing to use abs here, be aware that this depneds on PAC not allowing RD_points before
                 # TD_point to be valid
-                time_diff = abs(RD_point.stamp - self.TD_point.stamp)
+                time_diff = abs(RD_point.stamp * 1000 - self.TD_point.stamp.timestamp() * 1000)
                 if min_time is None or time_diff < min_time:
                     min_time = time_diff
                     self.first_valid_RD_point_location = id
